@@ -1,6 +1,8 @@
 /* ===========================================================
-   AKV Photography — behaviour
-   Vanilla. No build step, no dependencies, no third-party embeds.
+   AKV Photography — behaviour, shared by every page.
+   Vanilla. No build step, no dependencies.
+   Every module below looks for its own mount point and quietly
+   does nothing if the current page does not have one.
    =========================================================== */
 (function () {
   'use strict';
@@ -9,6 +11,17 @@
   const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
   const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const C = AKV.contact;
+  /* data.js declares SETUP with const, so it lives in the shared global
+     lexical scope - not on window. Read it the same way AKV is read. */
+  const CFG = (typeof SETUP !== 'undefined' && SETUP) || {};
+
+  /* which page are we on? */
+  const PAGE = (function () {
+    const last = location.pathname.split('/').pop();
+    return !last || last === '' ? 'index.html' : last;
+  })();
+
+  const plain = (s) => String(s).replace(/&amp;/g, 'and').replace(/&middot;/g, '-').replace(/&rsquo;/g, "'");
 
   /* ---------------------------------------------------------
      Reveal on scroll
@@ -28,52 +41,181 @@
     });
   };
 
+  /* frames that fade up as they arrive — galleries and couple albums */
+  const frameObserver = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      e.target.classList.add('in');
+      frameObserver.unobserve(e.target);
+    });
+  }, { rootMargin: '0px 0px -4% 0px', threshold: 0.05 });
+
+  /* ---------------------------------------------------------
+     Icons
+     --------------------------------------------------------- */
+  const ICONS = {
+    candid: '<path d="M14.5 4h-5L8 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-4l-1.5-3Z"/><circle cx="12" cy="13" r="3.6"/>',
+    ritual: '<path d="M12 2.5 14.6 8l6 .8-4.4 4.2 1.1 6-5.3-2.9L6.7 19l1.1-6L3.4 8.8 9.4 8 12 2.5Z"/>',
+    film:   '<rect x="2" y="4" width="20" height="16" rx="2.5"/><path d="M7 4v16M17 4v16M2 12h20M2 8h5M2 16h5M17 8h5M17 16h5"/>',
+    reel:   '<rect x="2" y="6" width="13.5" height="12" rx="2.4"/><path d="M15.5 11.2l5.1-2.9a.6.6 0 0 1 .9.52v6.36a.6.6 0 0 1-.9.52l-5.1-2.9Z"/>',
+    couple: '<path d="M12 20.5s-7.2-4.4-9.1-8.5C1.2 8.3 3.4 4.8 7 4.8c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.8 3.5 4.1 7.2-1.9 4.1-9.1 8.5-9.1 8.5Z"/>',
+    bloom:  '<path d="M12 12c0-3.4 2.4-6.2 5.4-6.2C17.4 9.2 15 12 12 12Zm0 0c0-3.4-2.4-6.2-5.4-6.2C6.6 9.2 9 12 12 12Zm0 0c3.4 0 6.2 2.4 6.2 5.4C14.8 17.4 12 15 12 12Zm0 0c-3.4 0-6.2 2.4-6.2 5.4C9.2 17.4 12 15 12 12Z"/><circle cx="12" cy="12" r="1.6"/>',
+    album:  '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19a1 1 0 0 1 1 1v15.5a1 1 0 0 1-1 1H6.5A2.5 2.5 0 0 1 4 18V5.5Z"/><path d="M4 18a2.5 2.5 0 0 1 2.5-2.5H20"/><path d="M9 3v9l3-2 3 2V3"/>',
+    booth:  '<rect x="5.5" y="2.5" width="13" height="19" rx="1.6"/><path d="M8.5 6.6h7M8.5 11h7M8.5 15.4h7M5.5 8.8h1.6M16.9 8.8h1.6M5.5 13.2h1.6M16.9 13.2h1.6"/>',
+    live:   '<circle cx="12" cy="12" r="2.5"/><path d="M8.1 8.1a5.6 5.6 0 0 0 0 7.8M15.9 8.1a5.6 5.6 0 0 1 0 7.8M5.2 5.2a9.7 9.7 0 0 0 0 13.6M18.8 5.2a9.7 9.7 0 0 1 0 13.6"/>'
+  };
+
+  const SOCIAL_ICONS = {
+    instagram: '<rect x="2.9" y="2.9" width="18.2" height="18.2" rx="5.2"/>' +
+               '<circle cx="12" cy="12" r="4.3"/><circle cx="17.4" cy="6.6" r="1.15" fill="currentColor" stroke="none"/>',
+    youtube:   '<rect x="2" y="5.4" width="20" height="13.2" rx="4.2"/>' +
+               '<path d="M10.1 9.2 15.4 12l-5.3 2.8Z" fill="currentColor" stroke="none"/>',
+    facebook:  '<circle cx="12" cy="12" r="9.2"/>' +
+               '<path d="M14.7 7.4h-1.5c-1 0-1.6.6-1.6 1.7v1.8h3l-.4 2.7h-2.6v6.6"/>' +
+               '<path d="M9.4 10.9h2.2"/>',
+    whatsapp:  '<path d="M3.4 20.6 4.6 16.3A8.2 8.2 0 1 1 7.8 19.4L3.4 20.6Z"/>' +
+               '<path d="M9.2 8.4c.16-.36.33-.37.5-.38h.42c.14 0 .33-.05.51.39l.7 1.7c.06.14.1.3.02.47l-.33.51c-.07.1-.14.21-.06.35.08.14.37.61.79.99.55.49 1.01.64 1.15.71.14.07.23.06.31-.03l.44-.51c.1-.12.21-.1.35-.05l1.57.74c.17.08.28.12.32.19.04.08.04.45-.11.88-.15.43-.87.83-1.22.85-.36.03-.69.16-2.33-.49-1.96-.78-3.2-2.81-3.3-2.94-.09-.14-.78-1.03-.78-1.97 0-.93.5-1.39.67-1.58Z"/>'
+  };
+
+  const svg = (paths, w) =>
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (w || 1.3) +
+    '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + '</svg>';
+
+  /* one social link, rendered either as a labelled pill or a bare mark */
+  const socialItem = (s, variant) => {
+    const mark = s.icon === 'mono'
+      ? '<span class="soc__mono" aria-hidden="true">' + s.mono + '</span>'
+      : '<span class="soc__glyph" aria-hidden="true">' + svg(SOCIAL_ICONS[s.icon], 1.5) + '</span>';
+
+    if (variant === 'bare') {
+      return '<a class="soc soc--bare" href="' + s.href + '" target="_blank" rel="noopener" ' +
+             'aria-label="' + plain(s.label) + '" title="' + plain(s.label) + '">' + mark + '</a>';
+    }
+    return '<a class="soc" href="' + s.href + '" target="_blank" rel="noopener">' + mark +
+           '<span class="soc__text"><b>' + s.label + '</b><i>' + s.handle + '</i></span></a>';
+  };
+
+  const socialHtml = (variant) => AKV.social.map((s) => socialItem(s, variant)).join('');
+
   /* ---------------------------------------------------------
      Nav
      --------------------------------------------------------- */
-  const nav = $('#nav');
-  const burger = $('#burger');
-  const menu = $('#mobilemenu');
+  (function nav() {
+    const bar = $('#nav');
+    if (!bar) return;
 
-  const onScrollNav = () => nav.classList.toggle('is-stuck', window.scrollY > 24);
-  window.addEventListener('scroll', onScrollNav, { passive: true });
-  onScrollNav();
+    const links = AKV.nav
+      .map((n) => '<a href="' + n.file + '"' +
+        (n.file === PAGE ? ' class="is-active" aria-current="page"' : '') +
+        '>' + n.label + '</a>')
+      .join('');
 
-  const setMenu = (open) => {
-    menu.hidden = !open;
-    burger.setAttribute('aria-expanded', String(open));
-    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
-    document.body.classList.toggle('locked', open);
-  };
-  burger.addEventListener('click', () => setMenu(menu.hidden));
-  $$('#mobilemenu a').forEach((a) => a.addEventListener('click', () => setMenu(false)));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) setMenu(false); });
+    const deskBox = $('#nav-links');
+    if (deskBox) deskBox.innerHTML = links;
 
-  $('#mm-ig').href = C.instagram;
-  $('#mm-fb').href = C.facebook;
+    const mmBox = $('#mm-links');
+    if (mmBox) {
+      mmBox.innerHTML = links +
+        '<a href="' + (PAGE === 'index.html' ? '#contact' : 'index.html#contact') +
+        '" class="mobilemenu__cta">Check your date</a>';
+    }
+
+    const cta = $('#nav-cta');
+    if (cta) cta.href = PAGE === 'index.html' ? '#contact' : 'index.html#contact';
+
+    const onScrollNav = () => bar.classList.toggle('is-stuck', window.scrollY > 24);
+    window.addEventListener('scroll', onScrollNav, { passive: true });
+    onScrollNav();
+
+    const burger = $('#burger');
+    const menu = $('#mobilemenu');
+    if (!burger || !menu) return;
+
+    const setMenu = (open) => {
+      menu.hidden = !open;
+      burger.setAttribute('aria-expanded', String(open));
+      burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      document.body.classList.toggle('locked', open);
+    };
+    burger.addEventListener('click', () => setMenu(menu.hidden));
+    $$('#mobilemenu a').forEach((a) => a.addEventListener('click', () => setMenu(false)));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !menu.hidden) setMenu(false);
+    });
+  })();
+
+  /* every social mount on the page */
+  (function social() {
+    $$('[data-social]').forEach((el) => {
+      el.innerHTML = socialHtml(el.dataset.social);
+    });
+  })();
 
   /* ---------------------------------------------------------
-     Hero copy
+     Brand — the drawn aperture stands in until the studio sends
+     its own logo. Fill SETUP.logo (and SETUP.logoLight for the
+     dark footer) and every mark on the site swaps itself over.
+     No page markup changes.
      --------------------------------------------------------- */
-  $('#hero-eyebrow').innerHTML = AKV.hero.eyebrow;
-  $('#hero-title').innerHTML =
-    AKV.hero.titleA + ' <em>' + AKV.hero.titleItalic + '</em><br>' + AKV.hero.titleB;
-  $('#hero-lede').textContent = AKV.hero.body;
+  (function brand() {
+    const S = CFG;
+    if (!S.logo && !S.logoLight && !S.logoMark) return;
+    const h = S.logoHeight || 34;
 
-  $('#hero-stats').innerHTML = AKV.hero.stats
-    .map((s) => '<div><dt>' + s.value + '</dt><dd>' + s.label + '</dd></div>')
-    .join('');
+    const img = (src, extra) =>
+      '<img src="' + src + '" alt="' + AKV.brand.name + '" ' +
+      'style="height:' + h + 'px;width:auto;display:block;' + (extra || '') + '">';
 
-  $$('.hero .reveal').forEach((el, i) => {
-    setTimeout(() => el.classList.add('in'), 220 + i * 120);
-  });
+    /* A full lockup carries the name, so it replaces the whole brand.
+       A bare mark replaces only the aperture and leaves the name set
+       in type beside it. */
+    const navBox = $('.nav__brand');
+    if (navBox) {
+      const lockup = S.logo || S.logoLight;
+      if (lockup) navBox.innerHTML = img(lockup);
+      else if (S.logoMark) {
+        const mark = $('.nav__mark', navBox);
+        if (mark) mark.innerHTML = img(S.logoMark);
+      }
+    }
+
+    /* The footer sits on ink, so it takes the reversed file if there
+       is one. A logo drawn only in dark ink would vanish there. */
+    const footName = $('.footer__brand .nav__name');
+    const footSrc = S.logoLight || S.logo;
+    if (footName && footSrc) {
+      footName.outerHTML = img(footSrc, 'margin-bottom:14px;');
+    }
+  })();
 
   /* ---------------------------------------------------------
-     Hero panel — the signature: a contact sheet advancing
-     frame by frame, with a film counter tracking the progress.
+     Home hero — the signature contact sheet, unchanged.
      --------------------------------------------------------- */
   (function contactSheet() {
     const box = $('#hero-slides');
+    if (!box) return;
+
+    const eyebrow = $('#hero-eyebrow');
+    const title = $('#hero-title');
+    const lede = $('#hero-lede');
+    const stats = $('#hero-stats');
+
+    if (eyebrow) eyebrow.innerHTML = AKV.hero.eyebrow;
+    if (title) {
+      title.innerHTML =
+        AKV.hero.titleA + ' <em>' + AKV.hero.titleItalic + '</em><br>' + AKV.hero.titleB;
+    }
+    if (lede) lede.textContent = AKV.hero.body;
+    if (stats) {
+      stats.innerHTML = AKV.hero.stats
+        .map((s) => '<div><dt>' + s.value + '</dt><dd>' + s.label + '</dd></div>')
+        .join('');
+    }
+
+    $$('.hero .reveal').forEach((el, i) => {
+      setTimeout(() => el.classList.add('in'), 220 + i * 120);
+    });
+
     const slides = AKV.hero.slides;
     const HOLD = 5200;
 
@@ -88,6 +230,7 @@
     const nEl = $('#counter-n');
     const tEl = $('#counter-t');
     const fill = $('#counter-fill');
+    if (!nEl || !tEl || !fill) return;
     const pad = (n) => String(n).padStart(2, '0');
 
     tEl.textContent = pad(slides.length);
@@ -117,10 +260,23 @@
   })();
 
   /* ---------------------------------------------------------
+     Page hero band — four frames under the page title.
+     --------------------------------------------------------- */
+  (function pageHeroBand() {
+    $$('[data-band]').forEach((band) => {
+      const files = band.dataset.band.split(',').map((s) => s.trim()).filter(Boolean);
+      band.innerHTML = files
+        .map((f) => '<figure><img src="' + IMG(f, 700) + '" alt="" loading="lazy" decoding="async"></figure>')
+        .join('');
+    });
+  })();
+
+  /* ---------------------------------------------------------
      Film strip marquee
      --------------------------------------------------------- */
   (function strip() {
     const track = $('#strip-track');
+    if (!track) return;
     const picks = AKV.gallery.slice(0, 18);
     const html = picks
       .map((g) => '<img src="' + IMG(g[0], 450) + '" alt="" loading="lazy" decoding="async">')
@@ -133,6 +289,7 @@
      --------------------------------------------------------- */
   (function shuffle() {
     const box = $('#shuffle');
+    if (!box) return;
     const srcs = AKV.craft.shuffle;
     box.innerHTML = srcs
       .map((s, i) => '<img src="' + s + '" data-pos="' + i + '" alt="" loading="lazy" decoding="async">')
@@ -163,6 +320,8 @@
      --------------------------------------------------------- */
   (function pillars() {
     const wrap = $('#pillars');
+    if (!wrap) return;
+
     wrap.innerHTML = AKV.pillars
       .map((p) =>
         '<div class="pillar reveal">' +
@@ -200,10 +359,12 @@
   })();
 
   /* ---------------------------------------------------------
-     Process — sticky stack with scrub
+     Process — sticky stack with scrub (pages that carry photographs)
      --------------------------------------------------------- */
   (function process() {
     const stack = $('#stack');
+    if (!stack) return;
+
     stack.innerHTML = AKV.process
       .map((s) =>
         '<div class="step">' +
@@ -243,229 +404,634 @@
   })();
 
   /* ---------------------------------------------------------
-     Services
+     Process — set in type alone, for the home page
      --------------------------------------------------------- */
-  const ICONS = {
-    candid: '<path d="M14.5 4h-5L8 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-4l-1.5-3Z"/><circle cx="12" cy="13" r="3.6"/>',
-    ritual: '<path d="M12 2.5 14.6 8l6 .8-4.4 4.2 1.1 6-5.3-2.9L6.7 19l1.1-6L3.4 8.8 9.4 8 12 2.5Z"/>',
-    film:   '<rect x="2" y="4" width="20" height="16" rx="2.5"/><path d="M7 4v16M17 4v16M2 12h20M2 8h5M2 16h5M17 8h5M17 16h5"/>',
-    couple: '<path d="M12 20.5s-7.2-4.4-9.1-8.5C1.2 8.3 3.4 4.8 7 4.8c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.8 3.5 4.1 7.2-1.9 4.1-9.1 8.5-9.1 8.5Z"/>',
-    bloom:  '<path d="M12 12c0-3.4 2.4-6.2 5.4-6.2C17.4 9.2 15 12 12 12Zm0 0c0-3.4-2.4-6.2-5.4-6.2C6.6 9.2 9 12 12 12Zm0 0c3.4 0 6.2 2.4 6.2 5.4C14.8 17.4 12 15 12 12Zm0 0c-3.4 0-6.2 2.4-6.2 5.4C9.2 17.4 12 15 12 12Z"/><circle cx="12" cy="12" r="1.6"/>',
-    album:  '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19a1 1 0 0 1 1 1v15.5a1 1 0 0 1-1 1H6.5A2.5 2.5 0 0 1 4 18V5.5Z"/><path d="M4 18a2.5 2.5 0 0 1 2.5-2.5H20"/><path d="M9 3v9l3-2 3 2V3"/>'
-  };
+  (function stepsPlain() {
+    const box = $('#steps');
+    if (!box) return;
+    box.innerHTML = AKV.process
+      .map((s) =>
+        '<article class="stepline reveal">' +
+          '<p class="stepline__n">' + s.step + '</p>' +
+          '<div class="stepline__body">' +
+            '<h3>' + s.title + '</h3>' +
+            '<p>' + s.body + '</p>' +
+          '</div>' +
+        '</article>')
+      .join('');
+  })();
 
-  $('#services-grid').innerHTML = AKV.services
-    .map((s) =>
-      '<article class="svc reveal">' +
-        '<div class="svc__icon" aria-hidden="true">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" ' +
-            'stroke-linecap="round" stroke-linejoin="round">' + ICONS[s.icon] + '</svg>' +
-        '</div>' +
+  /* ---------------------------------------------------------
+     Services / film craft — the same card, two data sets
+     --------------------------------------------------------- */
+  const cardsHtml = (list) => list
+    .map((s) => {
+      const inner =
+        '<div class="svc__icon" aria-hidden="true">' + svg(ICONS[s.icon]) + '</div>' +
         '<h3>' + s.title + '</h3>' +
-        '<p>' + s.body + '</p>' +
-      '</article>')
+        '<p>' + s.body + '</p>';
+      return s.href
+        ? '<a class="svc reveal" href="' + s.href + '">' + inner + '</a>'
+        : '<article class="svc reveal">' + inner + '</article>';
+    })
     .join('');
+
+  (function services() {
+    const grid = $('#services-grid');
+    if (grid) grid.innerHTML = cardsHtml(AKV.services);
+
+    const craft = $('#film-craft');
+    if (craft) craft.innerHTML = cardsHtml(AKV.filmCraft);
+
+    const occ = $('#occasions');
+    if (occ) occ.innerHTML = AKV.occasions.map((o) => '<li>' + o + '</li>').join('');
+
+    const bk = $('#booking');
+    if (bk) {
+      bk.innerHTML = AKV.booking
+        .map((b) => '<div class="fact reveal"><dt>' + b.label + '</dt><dd>' + b.value + '</dd></div>')
+        .join('');
+    }
+  })();
 
   /* ---------------------------------------------------------
-     Gallery — filters, lazy batches, lightbox
+     The shared viewer. Photographs open as stills; films open
+     as a player, and nothing from YouTube loads until a visitor
+     actually asks for one.
      --------------------------------------------------------- */
-  const LABELS = { w: 'Wedding', r: 'Reception', c: 'Couples & Portraits', m: 'Candid Moment' };
-  const BATCH = 40;
-  const masonry = $('#masonry');
-  const moreBtn = $('#load-more');
-  let filter = 'all';
-  let shown = 0;
-  let view = [];
-
-  const shotObserver = new IntersectionObserver((entries) => {
-    entries.forEach((e) => {
-      if (!e.isIntersecting) return;
-      e.target.classList.add('in');
-      shotObserver.unobserve(e.target);
-    });
-  }, { rootMargin: '0px 0px -4% 0px', threshold: 0.05 });
-
-  const computeView = () =>
-    (view = filter === 'all' ? AKV.gallery.slice() : AKV.gallery.filter((g) => g[1] === filter));
-
-  const renderBatch = () => {
-    const slice = view.slice(shown, shown + BATCH);
-    const frag = document.createDocumentFragment();
-    slice.forEach((g, i) => {
-      const idx = shown + i;
-      const b = document.createElement('button');
-      b.className = 'shot';
-      b.type = 'button';
-      b.dataset.i = idx;
-      b.setAttribute('aria-label', 'Open photograph ' + (idx + 1) + ' — ' + LABELS[g[1]]);
-      b.innerHTML = '<img src="' + IMG(g[0], 450) + '" alt="' + LABELS[g[1]] +
-                    ' photographed by AKV Photography" loading="lazy" decoding="async">';
-      frag.appendChild(b);
-      shotObserver.observe(b);
-    });
-    masonry.appendChild(frag);
-    shown += slice.length;
-    moreBtn.parentElement.classList.toggle('is-done', shown >= view.length);
-    moreBtn.textContent = 'Load more photographs (' + (view.length - shown) + ' left)';
-  };
-
-  const resetGallery = () => {
-    masonry.innerHTML = '';
-    shown = 0;
-    computeView();
-    renderBatch();
-  };
-
-  $('#filters').innerHTML = AKV.galleryFilters
-    .map((f, i) =>
-      '<button type="button" role="tab" data-k="' + f.key + '" aria-selected="' + (i === 0) + '">' +
-      f.label + '</button>')
-    .join('');
-
-  $('#filters').addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-k]');
-    if (!b || b.dataset.k === filter) return;
-    $$('#filters button').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
-    filter = b.dataset.k;
-    resetGallery();
-  });
-
-  moreBtn.addEventListener('click', renderBatch);
-  resetGallery();
-
-  /* lightbox */
-  const lb = $('#lightbox');
-  const lbImg = $('#lb-img');
-  const lbCap = $('#lb-cap');
-  let lbIndex = 0;
-  let lastFocus = null;
-
-  const showAt = (i) => {
-    const len = view.length;
-    lbIndex = (i + len) % len;
-    const g = view[lbIndex];
-    lbImg.src = IMG(g[0], 1600);
-    lbImg.alt = LABELS[g[1]] + ' photographed by AKV Photography';
-    lbCap.textContent = LABELS[g[1]] + ' — ' + (lbIndex + 1) + ' of ' + len;
-  };
-  const openLb = (i) => {
-    lastFocus = document.activeElement;
-    lb.hidden = false;
-    document.body.classList.add('locked');
-    showAt(i);
-    $('#lb-close').focus();
-  };
-  const closeLb = () => {
+  const viewer = (function () {
+    const lb = document.createElement('div');
+    lb.className = 'lightbox';
+    lb.id = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.setAttribute('aria-label', 'Viewer');
     lb.hidden = true;
-    document.body.classList.remove('locked');
-    lbImg.removeAttribute('src');
-    if (lastFocus) lastFocus.focus();
-  };
+    lb.innerHTML =
+      '<button class="lightbox__close" id="lb-close" aria-label="Close viewer">&times;</button>' +
+      '<button class="lightbox__nav lightbox__nav--prev" id="lb-prev" aria-label="Previous photograph">&#8249;</button>' +
+      '<button class="lightbox__nav lightbox__nav--next" id="lb-next" aria-label="Next photograph">&#8250;</button>' +
+      '<figure class="lightbox__stage" id="lb-stage">' +
+        '<img id="lb-img" alt="">' +
+        '<figcaption id="lb-cap"></figcaption>' +
+      '</figure>';
+    document.body.appendChild(lb);
 
-  masonry.addEventListener('click', (e) => {
-    const b = e.target.closest('.shot');
-    if (b) openLb(+b.dataset.i);
-  });
-  $('#lb-close').addEventListener('click', closeLb);
-  $('#lb-prev').addEventListener('click', () => showAt(lbIndex - 1));
-  $('#lb-next').addEventListener('click', () => showAt(lbIndex + 1));
-  lb.addEventListener('click', (e) => { if (e.target === lb) closeLb(); });
-  document.addEventListener('keydown', (e) => {
-    if (lb.hidden) return;
-    if (e.key === 'Escape') closeLb();
-    if (e.key === 'ArrowLeft') showAt(lbIndex - 1);
-    if (e.key === 'ArrowRight') showAt(lbIndex + 1);
-  });
+    const img = $('#lb-img', lb);
+    const cap = $('#lb-cap', lb);
+    const stage = $('#lb-stage', lb);
+    const prev = $('#lb-prev', lb);
+    const next = $('#lb-next', lb);
+
+    let list = [];
+    let idx = 0;
+    let mode = 'photo';
+    let lastFocus = null;
+    let frame = null;
+
+    const showAt = (i) => {
+      if (!list.length) return;
+      idx = (i + list.length) % list.length;
+      const item = list[idx];
+      img.src = item.src;
+      img.alt = item.alt || '';
+      cap.textContent = item.cap + ' — ' + (idx + 1) + ' of ' + list.length;
+    };
+
+    const clearFilm = () => {
+      if (frame) { frame.remove(); frame = null; }
+      img.hidden = false;
+    };
+
+    const open = () => {
+      lastFocus = document.activeElement;
+      lb.hidden = false;
+      document.body.classList.add('locked');
+      $('#lb-close', lb).focus();
+    };
+
+    const close = () => {
+      lb.hidden = true;
+      document.body.classList.remove('locked');
+      img.removeAttribute('src');
+      clearFilm();
+      if (lastFocus) lastFocus.focus();
+    };
+
+    const openPhotos = (items, i) => {
+      mode = 'photo';
+      list = items;
+      clearFilm();
+      prev.hidden = next.hidden = items.length < 2;
+      open();
+      showAt(i);
+    };
+
+    const openFilm = (id, label) => {
+      mode = 'film';
+      list = [];
+      prev.hidden = next.hidden = true;
+      img.hidden = true;
+      img.removeAttribute('src');
+      if (frame) frame.remove();
+      frame = document.createElement('iframe');
+      frame.className = 'lightbox__frame';
+      frame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      frame.allowFullscreen = true;
+      frame.title = label;
+      frame.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&modestbranding=1';
+      stage.insertBefore(frame, cap);
+      cap.textContent = label;
+      open();
+    };
+
+    $('#lb-close', lb).addEventListener('click', close);
+    prev.addEventListener('click', () => showAt(idx - 1));
+    next.addEventListener('click', () => showAt(idx + 1));
+    lb.addEventListener('click', (e) => { if (e.target === lb) close(); });
+    document.addEventListener('keydown', (e) => {
+      if (lb.hidden) return;
+      if (e.key === 'Escape') close();
+      if (mode !== 'photo') return;
+      if (e.key === 'ArrowLeft') showAt(idx - 1);
+      if (e.key === 'ArrowRight') showAt(idx + 1);
+    });
+
+    return { openPhotos: openPhotos, openFilm: openFilm };
+  })();
 
   /* ---------------------------------------------------------
-     Real weddings rail
+     Gallery — filters, lazy batches, viewer
      --------------------------------------------------------- */
-  $('#rail').innerHTML = AKV.weddings
-    .map((w) =>
-      '<article class="wed">' +
-        '<div class="wed__media"><img src="' + w.image + '" alt="' + w.couple.replace(/&amp;/g, 'and') +
-          ', photographed in Bangalore" loading="lazy" decoding="async"></div>' +
-        '<div class="wed__body">' +
-          '<p class="wed__place">' + w.place + '</p>' +
-          '<h3 class="wed__couple">' + w.couple + '</h3>' +
-          '<p class="wed__story">' + w.story + '</p>' +
-        '</div>' +
-      '</article>')
-    .join('');
+  (function gallery() {
+    const masonry = $('#masonry');
+    if (!masonry) return;
 
-  (function dragRail() {
-    const rail = $('#rail');
-    let down = false, x0 = 0, s0 = 0;
-    rail.addEventListener('pointerdown', (e) => {
-      if (e.pointerType === 'touch') return;
-      down = true; x0 = e.clientX; s0 = rail.scrollLeft;
-      rail.style.cursor = 'grabbing';
-    });
-    const stop = () => { down = false; rail.style.cursor = ''; };
-    window.addEventListener('pointerup', stop);
-    window.addEventListener('pointercancel', stop);
-    rail.addEventListener('pointermove', (e) => {
-      if (!down) return;
-      rail.scrollLeft = s0 - (e.clientX - x0);
+    const LABELS = { w: 'Wedding', r: 'Reception', c: 'Couples & Portraits', m: 'Candid Moment' };
+    const BATCH = 40;
+    const moreBtn = $('#load-more');
+    const filterBox = $('#filters');
+
+    let filter = (filterBox && filterBox.dataset.preset) || 'all';
+    let shown = 0;
+    let view = [];
+
+    const computeView = () =>
+      (view = filter === 'all' ? AKV.gallery.slice() : AKV.gallery.filter((g) => g[1] === filter));
+
+    const asViewerItems = () => view.map((g) => ({
+      src: IMG(g[0], 1600),
+      alt: LABELS[g[1]] + ' photographed by AKV Photography',
+      cap: LABELS[g[1]]
+    }));
+
+    const renderBatch = () => {
+      const slice = view.slice(shown, shown + BATCH);
+      const frag = document.createDocumentFragment();
+      slice.forEach((g, i) => {
+        const idx = shown + i;
+        const b = document.createElement('button');
+        b.className = 'shot';
+        b.type = 'button';
+        b.dataset.i = idx;
+        b.setAttribute('aria-label', 'Open photograph ' + (idx + 1) + ' — ' + LABELS[g[1]]);
+        b.innerHTML = '<img src="' + IMG(g[0], 450) + '" alt="' + LABELS[g[1]] +
+                      ' photographed by AKV Photography" loading="lazy" decoding="async">';
+        frag.appendChild(b);
+        frameObserver.observe(b);
+      });
+      masonry.appendChild(frag);
+      shown += slice.length;
+      if (moreBtn) {
+        moreBtn.parentElement.classList.toggle('is-done', shown >= view.length);
+        moreBtn.textContent = 'Load more photographs (' + (view.length - shown) + ' left)';
+      }
+    };
+
+    const resetGallery = () => {
+      masonry.innerHTML = '';
+      shown = 0;
+      computeView();
+      renderBatch();
+    };
+
+    if (filterBox) {
+      filterBox.innerHTML = AKV.galleryFilters
+        .map((f) =>
+          '<button type="button" role="tab" data-k="' + f.key + '" aria-selected="' +
+          (f.key === filter) + '">' + f.label + '</button>')
+        .join('');
+
+      filterBox.addEventListener('click', (e) => {
+        const b = e.target.closest('button[data-k]');
+        if (!b || b.dataset.k === filter) return;
+        $$('button', filterBox).forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+        filter = b.dataset.k;
+        resetGallery();
+      });
+    }
+
+    if (moreBtn) moreBtn.addEventListener('click', renderBatch);
+    resetGallery();
+
+    masonry.addEventListener('click', (e) => {
+      const b = e.target.closest('.shot');
+      if (b) viewer.openPhotos(asViewerItems(), +b.dataset.i);
     });
   })();
 
   /* ---------------------------------------------------------
-     Testimonials
+     Films — one renderer, used by the films page and by the
+     smaller film rows dropped into the other pages.
      --------------------------------------------------------- */
-  $('#says').innerHTML = AKV.testimonials
-    .map((t) =>
-      '<figure class="say reveal">' +
-        '<div class="say__stars" aria-label="Five out of five">&#9733;&#9733;&#9733;&#9733;&#9733;</div>' +
-        '<blockquote class="say__q">&ldquo;' + t.quote + '&rdquo;</blockquote>' +
-        '<figcaption><p class="say__by">' + t.name + '</p><p class="say__meta">' + t.meta + '</p></figcaption>' +
-      '</figure>')
-    .join('');
+  const PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+               '<path d="M8 5.2v13.6L19 12 8 5.2Z"/></svg>';
+
+  const filmCard = (f) =>
+    '<button class="film reveal" type="button" data-id="' + f.id + '" ' +
+      'data-label="' + plain(f.couple) + ' — ' + plain(f.title) + '" ' +
+      'aria-label="Play the film: ' + plain(f.couple) + ', ' + plain(f.title) + '">' +
+      '<div class="film__media">' +
+        /* the studio's older uploads have no maxres still; those are
+           flagged in the data, and the handler catches any others */
+        '<img src="' + (f.hq ? FILM_HQ(f.id) : FILM(f.id)) +
+          '" alt="A still from the film of ' + plain(f.couple) +
+          '" loading="lazy" decoding="async"' +
+          (f.hq ? '' : ' data-hq="' + FILM_HQ(f.id) + '" ' +
+            'onerror="if(this.dataset.hq){this.src=this.dataset.hq;this.removeAttribute(\'data-hq\');}"') + '>' +
+        '<span class="film__4k">4K</span>' +
+        '<span class="film__play" aria-hidden="true">' + PLAY + '</span>' +
+      '</div>' +
+      '<div class="film__body">' +
+        '<h3 class="film__couple">' + f.couple + '</h3>' +
+        '<p class="film__title">' + f.title + '</p>' +
+      '</div>' +
+    '</button>';
+
+  const wireFilmGrid = (grid) => {
+    grid.addEventListener('click', (e) => {
+      const b = e.target.closest('.film');
+      if (b) viewer.openFilm(b.dataset.id, b.dataset.label);
+    });
+  };
+
+  (function films() {
+    /* the full, filterable archive */
+    const grid = $('#filmgrid');
+    if (grid) {
+      const filterBox = $('#film-filters');
+      let filter = 'all';
+
+      const render = () => {
+        const view = filter === 'all' ? AKV.films : AKV.films.filter((f) => f.kind === filter);
+        grid.innerHTML = view.map(filmCard).join('');
+        watchReveals(grid);
+      };
+
+      if (filterBox) {
+        filterBox.innerHTML = AKV.filmFilters
+          .map((f, i) =>
+            '<button type="button" role="tab" data-k="' + f.key + '" aria-selected="' +
+            (i === 0) + '">' + f.label + '</button>')
+          .join('');
+
+        filterBox.addEventListener('click', (e) => {
+          const b = e.target.closest('button[data-k]');
+          if (!b || b.dataset.k === filter) return;
+          $$('button', filterBox).forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+          filter = b.dataset.k;
+          render();
+        });
+      }
+
+      wireFilmGrid(grid);
+      render();
+    }
+
+    /* Film grids elsewhere, scoped to a set of kinds:
+         data-films="e"              a plain row
+         data-films="f,e,c,l"        a pool
+         data-filterbar="some-id"    adds a filter bar over that pool
+         data-limit="3"              caps the row                        */
+    $$('[data-films]').forEach((box) => {
+      const kinds = box.dataset.films.split(',').map((s) => s.trim());
+      const limit = parseInt(box.dataset.limit, 10) || 0;
+      const pool = AKV.films.filter((f) => kinds.indexOf(f.kind) > -1);
+      const bar = box.dataset.filterbar ? document.getElementById(box.dataset.filterbar) : null;
+      let filter = 'all';
+
+      const paint = () => {
+        let list = filter === 'all' ? pool : pool.filter((f) => f.kind === filter);
+        if (limit) list = list.slice(0, limit);
+        box.innerHTML = list.map(filmCard).join('');
+        watchReveals(box);
+      };
+
+      if (bar) {
+        const keys = ['all'].concat(kinds);
+        bar.innerHTML = AKV.filmFilters
+          .filter((f) => keys.indexOf(f.key) > -1)
+          .map((f) => '<button type="button" role="tab" data-k="' + f.key + '" aria-selected="' +
+            (f.key === 'all') + '">' + f.label + '</button>')
+          .join('');
+
+        bar.addEventListener('click', (e) => {
+          const b = e.target.closest('button[data-k]');
+          if (!b || b.dataset.k === filter) return;
+          $$('button', bar).forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+          filter = b.dataset.k;
+          paint();
+        });
+      }
+
+      wireFilmGrid(box);
+      paint();
+    });
+  })();
 
   /* ---------------------------------------------------------
-     Pricing
+     The five couples. A page asks for the ones that belong to
+     it with data-couples="stories" or data-couples="traditional".
      --------------------------------------------------------- */
-  $('#plans').innerHTML = AKV.packages
-    .map((p) =>
-      '<article class="plan reveal' + (p.featured ? ' plan--hot' : '') + '">' +
-        (p.featured ? '<span class="plan__tag">Most booked</span>' : '') +
-        '<h3>' + p.name + '</h3>' +
-        '<p class="plan__price"><b>&#8377;' + p.price + '</b><i>' + p.unit + '</i></p>' +
-        '<ul>' + p.items.map((i) => '<li>' + i + '</li>').join('') + '</ul>' +
-        '<a class="btn btn--ghost btn--sm" href="#contact">Enquire</a>' +
-      '</article>')
-    .join('');
+  (function couples() {
+    const mount = $('[data-couples]');
+    if (!mount) return;
 
-  $('#notes').innerHTML = AKV.packageNotes.map((n) => '<li>' + n + '</li>').join('');
+    const which = mount.dataset.couples;
+    const set = AKV.couples.filter((c) => c.page === which);
+    const FIRST = 12;
+
+    mount.innerHTML = set
+      .map((c) =>
+        '<article class="couple" id="' + c.slug + '" data-slug="' + c.slug + '">' +
+          '<header class="couple__head">' +
+            '<div class="reveal">' +
+              '<p class="couple__kind">' + c.place + ' &middot; ' + c.kind + '</p>' +
+              '<h2 class="couple__name">' + c.couple + '</h2>' +
+            '</div>' +
+            '<div class="reveal">' +
+              '<p class="couple__story">' + c.story + '</p>' +
+              '<p class="couple__count">' + c.photos.length + ' photographs from the day</p>' +
+              (c.film
+                ? '<button class="btn btn--ghost btn--sm couple__film" type="button" ' +
+                    'data-film="' + c.film + '" data-label="' + plain(c.couple) + ' — ' +
+                    plain(c.filmLabel) + '">' +
+                    '<span class="couple__filmicon" aria-hidden="true">' + PLAY + '</span>' +
+                    'Watch their film</button>'
+                : '') +
+            '</div>' +
+          '</header>' +
+          '<div class="cgrid" data-grid="' + c.slug + '"></div>' +
+          '<div class="couple__more"><button class="btn btn--ghost btn--sm" type="button" ' +
+            'data-more="' + c.slug + '">See the rest of the album</button></div>' +
+        '</article>')
+      .join('');
+
+    mount.addEventListener('click', (e) => {
+      const f = e.target.closest('[data-film]');
+      if (f) viewer.openFilm(f.dataset.film, f.dataset.label);
+    });
+
+    set.forEach((c) => {
+      const grid = $('[data-grid="' + c.slug + '"]', mount);
+      const btn = $('[data-more="' + c.slug + '"]', mount);
+      let shown = 0;
+
+      const items = c.photos.map((f) => ({
+        src: PROJ(c.project, f, 1600),
+        alt: c.plain + ', photographed in ' + c.place + ' by AKV Photography',
+        cap: c.plain + ' · ' + c.kind
+      }));
+
+      const render = (n) => {
+        const slice = c.photos.slice(shown, shown + n);
+        const frag = document.createDocumentFragment();
+        slice.forEach((f, i) => {
+          const idx = shown + i;
+          const b = document.createElement('button');
+          b.className = 'cframe';
+          b.type = 'button';
+          b.dataset.i = idx;
+          b.setAttribute('aria-label', 'Open photograph ' + (idx + 1) + ' of ' + c.plain);
+          b.innerHTML = '<img src="' + PROJ(c.project, f, 700) + '" alt="' + c.plain +
+                        ', photographed in ' + c.place + ' by AKV Photography" ' +
+                        'loading="lazy" decoding="async">';
+          frag.appendChild(b);
+          frameObserver.observe(b);
+        });
+        grid.appendChild(frag);
+        shown += slice.length;
+        btn.parentElement.classList.toggle('is-done', shown >= c.photos.length);
+        btn.textContent = 'See the other ' + (c.photos.length - shown) + ' photographs';
+      };
+
+      render(FIRST);
+      btn.addEventListener('click', () => render(c.photos.length));
+      grid.addEventListener('click', (e) => {
+        const b = e.target.closest('.cframe');
+        if (b) viewer.openPhotos(items, +b.dataset.i);
+      });
+    });
+  })();
 
   /* ---------------------------------------------------------
-     Contact panel + footer
+     Archive frames — sections still waiting on their own set
      --------------------------------------------------------- */
-  $('#contact-list').innerHTML =
-    '<li><b>Call the studio</b><a href="' + C.phoneHref + '">' + C.phone + '</a></li>' +
-    '<li><b>Email</b><a href="mailto:' + C.email + '">' + C.email + '</a></li>' +
-    '<li><b>Studio</b><span>' + C.addressLine1 + '<br>' + C.addressLine2 + '<br>' + C.addressLine3 + '</span></li>' +
-    '<li><b>Hours</b><span>' + C.hours + '</span></li>';
+  (function archive() {
+    const grid = $('#archive-grid');
+    if (!grid) return;
 
-  $('#contact-social').innerHTML =
-    '<a href="' + C.instagram + '" target="_blank" rel="noopener">Instagram</a>' +
-    '<a href="' + C.facebook + '" target="_blank" rel="noopener">Facebook</a>' +
-    '<a href="' + C.whatsappHref + '" target="_blank" rel="noopener">WhatsApp</a>' +
-    '<a href="' + C.mapHref + '" target="_blank" rel="noopener">Directions</a>';
+    const items = AKV.archiveFrames.map((src) => ({
+      src: src.replace('/800X/', '/1600X/'),
+      alt: 'A frame from the AKV Photography archive',
+      cap: 'From the studio archive'
+    }));
 
-  $('#foot-tag').textContent = AKV.brand.tagline + '. Wedding and lifestyle photography in Bangalore since ' + AKV.brand.since + '.';
-  $('#foot-hours').textContent = C.hours;
-  $('#foot-addr').innerHTML = C.addressLine2 + '<br>' + C.addressLine3;
-  $('#foot-map').href = C.mapHref;
-  $('#foot-ig').href = C.instagram;
-  $('#foot-fb').href = C.facebook;
-  $('#foot-wa').href = C.whatsappHref;
-  $('#year').textContent = new Date().getFullYear();
+    grid.innerHTML = AKV.archiveFrames
+      .map((src, i) =>
+        '<button class="cframe" type="button" data-i="' + i + '" ' +
+          'aria-label="Open archive photograph ' + (i + 1) + '">' +
+          '<img src="' + src.replace('/800X/', '/700X/') + '" ' +
+          'alt="A frame from the AKV Photography archive" loading="lazy" decoding="async">' +
+        '</button>')
+      .join('');
+
+    $$('.cframe', grid).forEach((el) => frameObserver.observe(el));
+    grid.addEventListener('click', (e) => {
+      const b = e.target.closest('.cframe');
+      if (b) viewer.openPhotos(items, +b.dataset.i);
+    });
+  })();
 
   /* ---------------------------------------------------------
-     Enquiry form
+     Couples, set in type alone — the home page index
      --------------------------------------------------------- */
-  (function form() {
+  (function coupleIndex() {
+    const box = $('#cindex');
+    if (!box) return;
+
+    box.innerHTML = AKV.couples
+      .map((c) => {
+        const href = c.page + '.html#' + c.slug;
+        return '<a class="cidx reveal" href="' + href + '">' +
+          '<p class="cidx__kind">' + c.place + ' &middot; ' + c.kind + '</p>' +
+          '<h3 class="cidx__name">' + c.couple + '</h3>' +
+          '<p class="cidx__story">' + c.story + '</p>' +
+          '<p class="cidx__go">' + c.photos.length + ' photographs ' +
+            '<i aria-hidden="true">&rarr;</i></p>' +
+        '</a>';
+      })
+      .join('');
+  })();
+
+  /* ---------------------------------------------------------
+     Real weddings rail — every couple, each one a link to the
+     page that carries their album.
+     --------------------------------------------------------- */
+  (function rail() {
+    const box = $('#rail');
+    if (!box) return;
+
+    box.innerHTML = AKV.couples
+      .map((c) => {
+        const href = c.page + '.html#' + c.slug;
+        return '<a class="wed" href="' + href + '">' +
+          '<div class="wed__media"><img src="' + PROJ(c.project, c.cover, 1000) + '" alt="' +
+            c.plain + ', photographed in ' + c.place + ' by AKV Photography" ' +
+            'loading="lazy" decoding="async"></div>' +
+          '<div class="wed__body">' +
+            '<p class="wed__place">' + c.place + ' &middot; ' + c.kind + '</p>' +
+            '<h3 class="wed__couple">' + c.couple + '</h3>' +
+            '<p class="wed__story">' + c.story + '</p>' +
+            '<span class="wed__go">See the album <i aria-hidden="true">&rarr;</i></span>' +
+          '</div>' +
+        '</a>';
+      })
+      .join('');
+
+    let down = false, x0 = 0, s0 = 0, moved = 0;
+    box.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'touch') return;
+      down = true; moved = 0; x0 = e.clientX; s0 = box.scrollLeft;
+      box.style.cursor = 'grabbing';
+    });
+    const stop = () => { down = false; box.style.cursor = ''; };
+    window.addEventListener('pointerup', stop);
+    window.addEventListener('pointercancel', stop);
+    box.addEventListener('pointermove', (e) => {
+      if (!down) return;
+      moved = Math.abs(e.clientX - x0);
+      box.scrollLeft = s0 - (e.clientX - x0);
+    });
+    /* a drag should scroll the rail, not follow the card underneath */
+    box.addEventListener('click', (e) => { if (moved > 6) e.preventDefault(); });
+  })();
+
+  /* ---------------------------------------------------------
+     Testimonials — a page may ask for a shorter set
+     --------------------------------------------------------- */
+  (function testimonials() {
+    const box = $('#says');
+    if (!box) return;
+    const limit = parseInt(box.dataset.limit, 10);
+    const list = limit > 0 ? AKV.testimonials.slice(0, limit) : AKV.testimonials;
+
+    box.innerHTML = list
+      .map((t) =>
+        '<figure class="say reveal">' +
+          '<div class="say__stars" aria-label="Five out of five">&#9733;&#9733;&#9733;&#9733;&#9733;</div>' +
+          '<blockquote class="say__q">&ldquo;' + t.quote + '&rdquo;</blockquote>' +
+          '<figcaption>' +
+            '<p class="say__by">' + t.name + '</p>' +
+            '<p class="say__meta">' + t.meta + (t.src ? ' &middot; ' + t.src : '') + '</p>' +
+          '</figcaption>' +
+        '</figure>')
+      .join('');
+  })();
+
+  /* ---------------------------------------------------------
+     Contact — one form, mounted on every page
+     --------------------------------------------------------- */
+  (function contact() {
+    const host = $('#contact');
+    if (!host) return;
+
+    host.innerHTML =
+      '<div class="wrap contact__grid">' +
+        '<div class="contact__side">' +
+          '<p class="eyebrow reveal">Enquire</p>' +
+          '<h2 class="h2 reveal">Tell us about<br><em>your day</em></h2>' +
+          '<p class="contact__lede reveal">Send the dates and the functions you need covered. ' +
+            'We reply with availability and a package built around them.</p>' +
+          '<ul class="contact__list reveal">' +
+            '<li><b>Call the studio</b><a href="' + C.phoneHref + '">' + C.phone + '</a>' +
+              '<a href="' + C.phone2Href + '">' + C.phone2 + '</a></li>' +
+            '<li><b>Studio</b><span>' + C.addressLine1 + '<br>' + C.addressLine2 + '<br>' +
+              C.addressLine3 + '</span></li>' +
+            '<li><b>Hours</b><span>' + C.hours + '</span></li>' +
+          '</ul>' +
+          '<div class="socrow reveal" data-social="pill"></div>' +
+        '</div>' +
+
+        '<form class="form reveal" id="form" novalidate>' +
+          '<div class="form__row">' +
+            '<div class="field">' +
+              '<label for="f-name">Your name <span aria-hidden="true">*</span></label>' +
+              '<input id="f-name" name="name" type="text" autocomplete="name" required>' +
+              '<p class="field__err" id="e-name" role="alert"></p>' +
+            '</div>' +
+            '<div class="field">' +
+              '<label for="f-phone">Phone <span aria-hidden="true">*</span></label>' +
+              '<input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required>' +
+              '<p class="field__err" id="e-phone" role="alert"></p>' +
+            '</div>' +
+          '</div>' +
+          '<div class="form__row">' +
+            '<div class="field">' +
+              '<label for="f-email">Email</label>' +
+              '<input id="f-email" name="email" type="email" autocomplete="email">' +
+              '<p class="field__err" id="e-email" role="alert"></p>' +
+            '</div>' +
+            '<div class="field">' +
+              '<label for="f-date">Event date</label>' +
+              '<input id="f-date" name="date" type="date">' +
+              '<p class="field__hint">Not fixed yet? Leave it blank.</p>' +
+            '</div>' +
+          '</div>' +
+          '<div class="field">' +
+            '<label for="f-type">What are we shooting?</label>' +
+            '<div class="select">' +
+              '<select id="f-type" name="type">' +
+                '<option>Wedding — photo &amp; video</option>' +
+                '<option>Wedding — photo only</option>' +
+                '<option>Wedding film only</option>' +
+                '<option>Pre-wedding shoot</option>' +
+                '<option>Engagement / reception</option>' +
+                '<option>Mehendi, haldi or sangeet</option>' +
+                '<option>Maternity or newborn</option>' +
+                '<option>Baby shower or naming ceremony</option>' +
+                '<option>First birthday</option>' +
+                '<option>Threading ceremony or house warming</option>' +
+                '<option>Portfolio / fashion</option>' +
+                '<option>Other function</option>' +
+              '</select>' +
+            '</div>' +
+          '</div>' +
+          '<div class="field">' +
+            '<label for="f-msg">Anything else we should know?</label>' +
+            '<textarea id="f-msg" name="message" rows="4" ' +
+              'placeholder="Venue, number of functions, family traditions to cover&hellip;"></textarea>' +
+          '</div>' +
+          '<button class="btn btn--block" id="submit" type="submit">' +
+            '<span class="btn__label">Send enquiry</span>' +
+            '<span class="btn__spin" aria-hidden="true"></span>' +
+          '</button>' +
+          '<p class="form__note" id="form-note" role="status" aria-live="polite"></p>' +
+        '</form>' +
+      '</div>';
+
+    $$('[data-social]', host).forEach((el) => { el.innerHTML = socialHtml(el.dataset.social); });
+
     const f = $('#form');
     const btn = $('#submit');
     const note = $('#form-note');
@@ -502,22 +1068,97 @@
         note.textContent = 'Please fix the highlighted fields.';
         return;
       }
+      const S = CFG;
+      const F = S.formFields || {};
+
+      /* Nothing is wired up yet. Rather than accept an enquiry and drop
+         it, hand the visitor a channel that works. */
+      if (!S.formAction) {
+        note.innerHTML = 'The enquiry form is not connected yet &mdash; please call ' +
+          '<a href="' + C.phoneHref + '">' + C.phone + '</a> or ' +
+          '<a href="' + C.whatsappHref + '" target="_blank" rel="noopener">message the ' +
+          'studio on WhatsApp</a>, and we will come back with availability the same day.';
+        return;
+      }
+
       btn.classList.add('is-busy');
       $('.btn__label', btn).textContent = 'Sending';
 
-      /* No backend on a static site — wire this to the studio's form handler. */
-      setTimeout(() => {
-        btn.classList.remove('is-busy');
-        $('.btn__label', btn).textContent = 'Enquiry sent';
-        note.textContent = 'Thank you. We will come back to you with availability within one working day.';
-        f.reset();
-        setTimeout(() => { $('.btn__label', btn).textContent = 'Send enquiry'; }, 4200);
-      }, 1100);
+      /* Posted straight to the studio's Google Form, so the response
+         lands in their sheet and the visitor never leaves the page.
+         The form is opaque by design (no-cors), so a resolved request
+         is the only success signal there is. */
+      const body = new FormData();
+      const add = (key, value) => { if (F[key] && value) body.append(F[key], value); };
+      add('name', $('#f-name').value.trim());
+      add('phone', $('#f-phone').value.trim());
+      add('email', $('#f-email').value.trim());
+      add('date', $('#f-date').value);
+      add('type', $('#f-type').value);
+      add('message', $('#f-msg').value.trim());
+
+      const reset = () => { $('.btn__label', btn).textContent = 'Send enquiry'; };
+
+      fetch(S.formAction, { method: 'POST', mode: 'no-cors', body: body })
+        .then(() => {
+          btn.classList.remove('is-busy');
+          $('.btn__label', btn).textContent = 'Enquiry sent';
+          note.textContent = 'Thank you. We will come back to you with availability within one working day.';
+          f.reset();
+          setTimeout(reset, 4200);
+        })
+        .catch(() => {
+          btn.classList.remove('is-busy');
+          reset();
+          note.innerHTML = 'That did not go through &mdash; please call ' +
+            '<a href="' + C.phoneHref + '">' + C.phone + '</a> or ' +
+            '<a href="' + C.whatsappHref + '" target="_blank" rel="noopener">message us ' +
+            'on WhatsApp</a> instead.';
+        });
     });
+  })();
+
+  /* ---------------------------------------------------------
+     Footer
+     --------------------------------------------------------- */
+  (function footer() {
+    const explore = $('#foot-explore');
+    if (explore) {
+      explore.innerHTML = AKV.nav
+        .map((n) => '<a href="' + n.file + '">' + n.label + '</a>')
+        .join('');
+    }
+
+    const set = (id, fn) => { const el = $(id); if (el) fn(el); };
+    set('#foot-tag', (el) => {
+      el.textContent = AKV.brand.tagline + '. ' + AKV.brand.promise;
+    });
+    set('#foot-hours', (el) => { el.textContent = C.hours; });
+    set('#foot-addr', (el) => { el.innerHTML = C.addressLine2 + '<br>' + C.addressLine3; });
+    set('#foot-map', (el) => { el.href = C.mapHref; });
+    set('#foot-phone', (el) => { el.href = C.phoneHref; el.textContent = C.phone; });
+    set('#year', (el) => { el.textContent = new Date().getFullYear(); });
   })();
 
   /* ---------------------------------------------------------
      Go
      --------------------------------------------------------- */
   watchReveals(document);
+
+  /* A deep link should land on its target, clear of the nav pill.
+     Album grids above the target settle as their frames arrive, so the
+     position is re-applied a couple of times before we let go. */
+  if (location.hash) {
+    const target = document.getElementById(location.hash.slice(1));
+    if (target) {
+      const land = () => window.scrollTo({
+        top: target.getBoundingClientRect().top + window.scrollY - 108,
+        behavior: 'auto'
+      });
+      requestAnimationFrame(land);
+      window.addEventListener('load', land);
+      setTimeout(land, 400);
+      setTimeout(land, 1200);
+    }
+  }
 })();

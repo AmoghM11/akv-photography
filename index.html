@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AKV Photography — Wedding &amp; Lifestyle Photographers in Bangalore</title>
-<meta name="description" content="AKV Photography is a Bangalore wedding and lifestyle photography studio founded in 2012 by Anil Kumar Venkatesh. Candid photography, traditional coverage, cinematic wedding films, pre-wedding shoots and hand-sequenced albums. Rated 4.9 across 39 reviews.">
+<meta name="description" content="AKV Photography is a Bangalore wedding and lifestyle photography studio founded in 2012 by Anil Kumar Venkatesh. Over 600 weddings covered — candid photography, traditional coverage, cinematic 4K films, pre-wedding shoots and hand-sequenced albums.">
 <meta name="theme-color" content="#FBF9F5">
 <meta property="og:type" content="website">
 <meta property="og:title" content="AKV Photography — Wedding &amp; Lifestyle Photographers in Bangalore">
-<meta property="og:description" content="Candid wedding photography, films and albums from Bangalore since 2012. Rated 4.9 across 39 reviews.">
+<meta property="og:description" content="Crafting stories through visuals. Premium wedding photography from Bangalore since 2012, with more than 600 weddings covered.">
 <meta property="og:image" content="https://image.wedmegood.com/resized/1600X/uploads/member/210942/1771252263_DSC07531.jpg">
 
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
@@ -25,7 +25,7 @@
 <!-- ============================ NAV ============================ -->
 <header class="nav" id="nav">
   <div class="nav__inner">
-    <a class="nav__brand" href="#top" aria-label="AKV Photography, back to top">
+    <a class="nav__brand" href="index.html" aria-label="AKV Photography, home">
       <span class="nav__mark" aria-hidden="true">
         <svg viewBox="0 0 40 40" width="34" height="34" fill="none">
           <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="1"/>
@@ -39,16 +39,9 @@
       </span>
     </a>
 
-    <nav class="nav__links" aria-label="Primary">
-      <a href="#work">Work</a>
-      <a href="#story">Story</a>
-      <a href="#process">Process</a>
-      <a href="#services">Services</a>
-      <a href="#weddings">Real Weddings</a>
-      <a href="#pricing">Pricing</a>
-    </nav>
+    <nav class="nav__links" id="nav-links" aria-label="Primary"></nav>
 
-    <a class="btn btn--sm nav__cta" href="#contact">Check your date</a>
+    <a class="btn btn--sm nav__cta" id="nav-cta" href="#contact">Check your date</a>
 
     <button class="nav__burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="mobilemenu">
       <span></span><span></span>
@@ -57,18 +50,9 @@
 </header>
 
 <div class="mobilemenu" id="mobilemenu" hidden>
-  <nav aria-label="Mobile">
-    <a href="#work">Work</a>
-    <a href="#story">Story</a>
-    <a href="#process">Process</a>
-    <a href="#services">Services</a>
-    <a href="#weddings">Real Weddings</a>
-    <a href="#pricing">Pricing</a>
-    <a href="#contact" class="mobilemenu__cta">Check your date</a>
-  </nav>
+  <nav aria-label="Mobile" id="mm-links"></nav>
   <div class="mobilemenu__foot">
-    <a id="mm-ig" href="#" target="_blank" rel="noopener">Instagram</a>
-    <a id="mm-fb" href="#" target="_blank" rel="noopener">Facebook</a>
+    <div class="socbar" data-social="bare"></div>
   </div>
 </div>
 
@@ -82,7 +66,7 @@
     <p class="hero__lede reveal" id="hero-lede"></p>
     <div class="hero__actions reveal">
       <a class="btn" href="#contact">Check your date</a>
-      <a class="btn btn--ghost" href="#work">See the work</a>
+      <a class="btn btn--ghost" href="films.html">See the work</a>
     </div>
     <dl class="hero__stats reveal" id="hero-stats"></dl>
   </div>
@@ -112,15 +96,11 @@
       <p class="eyebrow reveal">The studio</p>
       <h2 class="h2 reveal">Fourteen years of<br><em>watching closely</em></h2>
       <div class="story__copy reveal">
-        <p>AKV Photography was founded in Bangalore in 2012 by <strong>Anil Kumar Venkatesh</strong>. The studio specialises in candid photography — the kind that does not ask a room to stop and pose — alongside traditional coverage, cinematic wedding films and pre-wedding shoots.</p>
-        <p>The team travels outstation for destination weddings, shoots the muhurtham and the mehendi and the reception with the same attention, and hands the whole story back within four weeks. Photographs, films, and albums built to be opened again in twenty years.</p>
+        <p>AKV Photography was founded in Bangalore in 2012 by <strong>Anil Kumar Venkatesh</strong>, and specialises in candid photography — the kind that does not ask a room to stop and pose. More than <strong>six hundred weddings</strong> later, that is still the whole method.</p>
+        <p>Their knowledge of the latest trends and equipment helps them preserve your precious moments in a beautiful way. Alongside the candid work runs traditional coverage, cinematic wedding films, pre-wedding shoots and hand-sequenced albums — and the team travels outstation to cover destination weddings.</p>
         <p>They believe it is the tiny details that hold the best of the memories — and they photograph those details with real precision.</p>
       </div>
-      <ul class="story__badges reveal">
-        <li><span>4.9 / 5</span> Across 39 client reviews</li>
-        <li><span>100%</span> Of couples recommend us</li>
-        <li><span>4 weeks</span> Standard delivery</li>
-      </ul>
+      <p class="reveal" style="margin-top:28px"><a class="btn btn--ghost btn--sm" href="about.html">Read the studio&rsquo;s story</a></p>
     </div>
 
     <div class="story__cards">
@@ -128,7 +108,7 @@
         <div class="shuffle" id="shuffle"></div>
         <div class="card__foot">
           <h3>Candid, first</h3>
-          <p>Two hundred and twelve photographs in the studio archive. Not one of them staged twice.</p>
+          <p>Fourteen years of photographs in the studio archive. Not one of them staged twice.</p>
         </div>
       </article>
     </div>
@@ -153,6 +133,34 @@
   <div class="stack" id="stack"></div>
 </section>
 
+<!-- ========================= REAL WEDDINGS ========================= -->
+<section class="section weddings" id="weddings">
+  <div class="wrap">
+    <header class="sechead sechead--split">
+      <div>
+        <p class="eyebrow reveal">Real weddings</p>
+        <h2 class="h2 reveal">Five couples, and the<br><em>days they trusted us with</em></h2>
+      </div>
+      <p class="sechead__aside reveal">Drag or scroll sideways, then open any couple to see their complete album.</p>
+    </header>
+  </div>
+  <div class="rail" id="rail"></div>
+</section>
+
+<!-- ============================ OCCASIONS ============================ -->
+<section class="section" id="occasions-section">
+  <div class="wrap">
+    <header class="sechead sechead--split">
+      <div>
+        <p class="eyebrow reveal">Occasions we cover</p>
+        <h2 class="h2 reveal">Not only the wedding,<br><em>everything around it</em></h2>
+      </div>
+      <p class="sechead__aside reveal">Fourteen years in, the studio has photographed and filmed most things a family celebrates — and the same team shows up for the small ones as for the big ones.</p>
+    </header>
+    <ul class="chips reveal" id="occasions"></ul>
+  </div>
+</section>
+
 <!-- ============================ SERVICES ============================ -->
 <section class="section services" id="services">
   <div class="wrap">
@@ -161,7 +169,7 @@
         <p class="eyebrow reveal">What we shoot</p>
         <h2 class="h2 reveal">Everything from the<br><em>mehendi to the album</em></h2>
       </div>
-      <p class="sechead__aside reveal">Maternity shoots, fashion shoots, pre-wedding films, drone photography, live streaming and small-function coverage are all available on request.</p>
+      <p class="sechead__aside reveal">Nine services, offered together or one at a time. Most couples start with photography and a film, and add the album and the live stream from there.</p>
     </header>
   </div>
   <div class="wrap wrap--wide">
@@ -169,136 +177,23 @@
   </div>
 </section>
 
-<!-- ============================ GALLERY ============================ -->
-<section class="section work" id="work">
-  <div class="wrap">
-    <header class="sechead sechead--split">
-      <div>
-        <p class="eyebrow reveal">Selected work</p>
-        <h2 class="h2 reveal">One hundred and fifty<br><em>reasons to look</em></h2>
-      </div>
-      <p class="sechead__aside reveal">Straight from the studio archive. Click any frame to open it full size, then use the arrow keys.</p>
-    </header>
-
-    <div class="filters" id="filters" role="tablist" aria-label="Filter photographs"></div>
-  </div>
-
-  <div class="wrap wrap--wide">
-    <div class="masonry" id="masonry"></div>
-    <div class="work__more">
-      <button class="btn btn--ghost" id="load-more" type="button">Load more photographs</button>
-    </div>
-  </div>
-</section>
-
-<!-- ========================= REAL WEDDINGS ========================= -->
-<section class="section weddings" id="weddings">
-  <div class="wrap">
-    <header class="sechead sechead--split">
-      <div>
-        <p class="eyebrow reveal">Real weddings</p>
-        <h2 class="h2 reveal">Couples, and the<br><em>days they trusted us with</em></h2>
-      </div>
-      <p class="sechead__aside reveal">A few of the days we have been trusted with. Drag or scroll sideways.</p>
-    </header>
-  </div>
-  <div class="rail" id="rail"></div>
-</section>
-
 <!-- ========================= TESTIMONIALS ========================= -->
 <section class="section says">
   <div class="wrap">
-    <header class="sechead">
-      <p class="eyebrow reveal">In their words</p>
-      <h2 class="h2 reveal">Thirty-nine reviews.<br><em>Every one a five.</em></h2>
-    </header>
-    <div class="says__grid" id="says"></div>
-  </div>
-</section>
-
-<!-- ============================ PRICING ============================ -->
-<section class="section pricing" id="pricing">
-  <div class="wrap">
     <header class="sechead sechead--split">
       <div>
-        <p class="eyebrow reveal">Published rates</p>
-        <h2 class="h2 reveal">Clear pricing,<br><em>before you ask</em></h2>
+        <p class="eyebrow reveal">In their words</p>
+        <h2 class="h2 reveal">What the couples<br><em>said afterwards</em></h2>
       </div>
-      <p class="sechead__aside reveal">Packages are customised around your dates and functions. These are the studio's standard published rates.</p>
+      <p class="sechead__aside reveal">In the couples&rsquo; own words, exactly as they were written after the wedding.</p>
     </header>
-    <div class="plans" id="plans"></div>
-    <ul class="notes" id="notes"></ul>
+    <div class="says__grid" id="says" data-limit="6"></div>
+    <p class="reveal" style="margin-top:clamp(30px,4vw,44px)"><a class="btn btn--ghost btn--sm" href="about.html">Read every review</a></p>
   </div>
 </section>
 
 <!-- ============================ CONTACT ============================ -->
-<section class="section contact" id="contact">
-  <div class="wrap contact__grid">
-    <div class="contact__side">
-      <p class="eyebrow reveal">Enquire</p>
-      <h2 class="h2 reveal">Tell us about<br><em>your day</em></h2>
-      <p class="contact__lede reveal">Send the dates and the functions you need covered. We reply with availability and a package built around them.</p>
-
-      <ul class="contact__list reveal" id="contact-list"></ul>
-
-      <div class="contact__social reveal" id="contact-social"></div>
-    </div>
-
-    <form class="form reveal" id="form" novalidate>
-      <div class="form__row">
-        <div class="field">
-          <label for="f-name">Your name <span aria-hidden="true">*</span></label>
-          <input id="f-name" name="name" type="text" autocomplete="name" required>
-          <p class="field__err" id="e-name" role="alert"></p>
-        </div>
-        <div class="field">
-          <label for="f-phone">Phone <span aria-hidden="true">*</span></label>
-          <input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required>
-          <p class="field__err" id="e-phone" role="alert"></p>
-        </div>
-      </div>
-
-      <div class="form__row">
-        <div class="field">
-          <label for="f-email">Email</label>
-          <input id="f-email" name="email" type="email" autocomplete="email">
-          <p class="field__err" id="e-email" role="alert"></p>
-        </div>
-        <div class="field">
-          <label for="f-date">Event date</label>
-          <input id="f-date" name="date" type="date">
-          <p class="field__hint">Not fixed yet? Leave it blank.</p>
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="f-type">What are we shooting?</label>
-        <div class="select">
-          <select id="f-type" name="type">
-            <option>Wedding — photo &amp; video</option>
-            <option>Wedding — photo only</option>
-            <option>Pre-wedding shoot</option>
-            <option>Engagement / reception</option>
-            <option>Maternity or newborn</option>
-            <option>Portfolio / fashion</option>
-            <option>Other function</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="f-msg">Anything else we should know?</label>
-        <textarea id="f-msg" name="message" rows="4" placeholder="Venue, number of functions, family traditions to cover&hellip;"></textarea>
-      </div>
-
-      <button class="btn btn--block" id="submit" type="submit">
-        <span class="btn__label">Send enquiry</span>
-        <span class="btn__spin" aria-hidden="true"></span>
-      </button>
-      <p class="form__note" id="form-note" role="status" aria-live="polite"></p>
-    </form>
-  </div>
-</section>
+<section class="section contact" id="contact"></section>
 
 </main>
 
@@ -312,21 +207,17 @@
     </div>
     <div class="footer__col">
       <h4>Explore</h4>
-      <a href="#work">Work</a>
-      <a href="#story">Story</a>
-      <a href="#services">Services</a>
-      <a href="#pricing">Pricing</a>
+      <div id="foot-explore"></div>
     </div>
     <div class="footer__col">
       <h4>Studio</h4>
       <p id="foot-addr"></p>
+      <a id="foot-phone" href="#"></a>
       <a id="foot-map" href="#" target="_blank" rel="noopener">Open in Maps</a>
     </div>
     <div class="footer__col">
-      <h4>Follow</h4>
-      <a id="foot-ig" href="#" target="_blank" rel="noopener">Instagram</a>
-      <a id="foot-fb" href="#" target="_blank" rel="noopener">Facebook</a>
-      <a id="foot-wa" href="#" target="_blank" rel="noopener">WhatsApp</a>
+      <h4>Find us</h4>
+      <div class="socbar" data-social="bare"></div>
     </div>
   </div>
   <div class="wrap footer__base">
@@ -334,17 +225,6 @@
     <p>Founded 2012 by Anil Kumar Venkatesh.</p>
   </div>
 </footer>
-
-<!-- ============================ LIGHTBOX ============================ -->
-<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photograph viewer" hidden>
-  <button class="lightbox__close" id="lb-close" aria-label="Close viewer">&times;</button>
-  <button class="lightbox__nav lightbox__nav--prev" id="lb-prev" aria-label="Previous photograph">&#8249;</button>
-  <button class="lightbox__nav lightbox__nav--next" id="lb-next" aria-label="Next photograph">&#8250;</button>
-  <figure class="lightbox__stage">
-    <img id="lb-img" alt="">
-    <figcaption id="lb-cap"></figcaption>
-  </figure>
-</div>
 
 <script src="js/data.js"></script>
 <script src="js/main.js"></script>
