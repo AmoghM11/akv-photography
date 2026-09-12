@@ -68,6 +68,16 @@ sections that actually need attention are much smaller:
 | Couple albums | 5 albums, 20–30 each | Portrait 3:4 |
 | Maternity / lifestyle | 8 | Any — **currently placeholders** |
 | Archive gallery | 150 | Mixed |
+| **Anil's portrait (About)** | 1 | Portrait 4:5, ≥900px — **currently absent** |
+
+A portrait of Anil goes in through `SETUP.founderPhoto` rather than the
+manifest, since it is the one photograph with no filename to match:
+
+```js
+founderPhoto: 'assets/photos/anil.jpg',
+```
+
+It drops in above his name on the About page; no markup changes.
 
 **Specification to send the client:**
 
@@ -88,9 +98,17 @@ sections that actually need attention are much smaller:
 > variants rather than serving 2500px files to phones. The home page
 > alone loads about 50 images.
 
-**The one genuine gap:** the maternity and lifestyle set on the Stories
-page is standing in with frames from the wedding archive, and the page
-says so. Those 8 need real maternity photographs.
+**Two genuine gaps:**
+
+1. The maternity and lifestyle set on the Stories page is standing in
+   with frames from the wedding archive, and the page says so. Those 8
+   need real maternity photographs.
+2. **There is no photograph of Anil.** The one that used to sit on his
+   About card was a bride from the wedding archive, which read as
+   though it were him, so it has been removed. The card shows his name
+   and role until a real portrait arrives. None of the studio's
+   listings carry one — WedMeGood's own profile picture for AKV is a
+   bride photograph, not the founder.
 
 ---
 

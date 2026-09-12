@@ -46,6 +46,13 @@ const SETUP = {
   logoMark: '',
   logoHeight: 34,
 
+  /* --- FOUNDER PORTRAIT --------------------------------------------
+     A photograph of Anil for the About page. Blank leaves the card as
+     a name and a line of text, which is how it stands today - the
+     picture that used to sit there was a bride from the wedding
+     archive, not him. Portrait crop, 4:5, at least 900px wide. */
+  founderPhoto: '',
+
   /* --- ENQUIRY FORM ------------------------------------------------
      The site keeps its own form; the responses land in the studio's
      Google Sheet and the visitor never leaves the page.

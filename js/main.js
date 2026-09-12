@@ -1124,6 +1124,24 @@
   })();
 
   /* ---------------------------------------------------------
+     Founder portrait — the About card carries only a name until
+     the studio sends a photograph of Anil. Set SETUP.founderPhoto
+     and it drops in above the name.
+     --------------------------------------------------------- */
+  (function founder() {
+    const card = $('#founder-card');
+    if (!card || !CFG.founderPhoto) return;
+    const foot = $('.card__foot', card);
+    card.insertAdjacentHTML('afterbegin',
+      '<div style="aspect-ratio:4/5;overflow:hidden;background:var(--paper-3)">' +
+      '<img src="' + CFG.founderPhoto + '" alt="' + AKV.brand.founder +
+      ', founder of ' + AKV.brand.name + '" ' +
+      'style="width:100%;height:100%;object-fit:cover" loading="lazy" decoding="async"></div>');
+    /* the foot only loses its rule while there is nothing above it */
+    if (foot) foot.style.borderTop = '';
+  })();
+
+  /* ---------------------------------------------------------
      Footer
      --------------------------------------------------------- */
   (function footer() {
