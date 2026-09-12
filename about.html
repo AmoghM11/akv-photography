@@ -93,12 +93,19 @@
       </div>
       <div class="reveal">
         <!-- The photograph that sat here was a bride from the wedding
-             archive, not Anil, which read as though it were him. It is
-             out until the studio sends a real portrait: set
-             SETUP.founderPhoto in js/data.js and it drops in above the
-             name, no markup change needed. -->
+             archive, not Anil, which read as though it were him. The
+             frame below holds its place at the same 4:5 the portrait
+             will use, so nothing shifts when the real one lands: set
+             SETUP.founderPhoto in js/data.js and it fills this slot. -->
         <article class="card" id="founder-card" style="box-shadow:var(--sh-1)">
-          <div class="card__foot" style="border-top:none">
+          <div class="portrait" id="founder-portrait" aria-hidden="true">
+            <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="1"/>
+              <circle cx="20" cy="20" r="9.5" stroke="currentColor" stroke-width="1" opacity=".55"/>
+              <path d="M20 2.2 L28.6 12.5 M37.8 20 L25.4 22.6 M31.4 34.5 L25.8 22.9 M8.6 34.5 L17.6 24.4 M2.2 20 L14.6 17.4 M8.6 5.5 L14.2 17.1" stroke="currentColor" stroke-width=".9" opacity=".45"/>
+            </svg>
+          </div>
+          <div class="card__foot">
             <h3>Anil Kumar Venkatesh</h3>
             <p>Founder and lead photographer. Builds the shoot storyline for every event personally, before the first frame is made.</p>
           </div>
