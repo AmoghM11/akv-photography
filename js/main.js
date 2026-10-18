@@ -501,6 +501,9 @@
       img.src = item.src;
       img.alt = item.alt || '';
       cap.textContent = item.cap + ' — ' + (idx + 1) + ' of ' + list.length;
+      /* fetch the next frame while this one is looked at, so stepping
+         through an album never waits on the network */
+      if (list.length > 1) new Image().src = list[(idx + 1) % list.length].src;
     };
 
     const clearFilm = () => {
@@ -802,9 +805,18 @@
       const btn = $('[data-more="' + c.slug + '"]', mount);
       let shown = 0;
 
+      const A = c.album;
+      const alt = c.plain + ', photographed in ' + c.place + ' by AKV Photography';
+      /* chapter titles, keyed by the frame each one opens on */
+      const chapters = {};
+      if (A) {
+        grid.classList.add('cgrid--story');
+        A.chapters.forEach((ch, n) => { chapters[ch.from] = { n: n + 1, title: ch.title }; });
+      }
+
       const items = c.photos.map((f) => ({
-        src: PROJ(c.project, f, 1600),
-        alt: c.plain + ', photographed in ' + c.place + ' by AKV Photography',
+        src: A ? ALBUM_FULL(A, f) : PROJ(c.project, f, 1600),
+        alt: alt,
         cap: c.plain + ' · ' + c.kind
       }));
 
@@ -813,24 +825,50 @@
         const frag = document.createDocumentFragment();
         slice.forEach((f, i) => {
           const idx = shown + i;
+          if (A && chapters[idx]) {
+            /* close the row before it, so the last frames of a chapter
+               keep their height instead of stretching across the page */
+            if (idx > 0) frag.appendChild(Object.assign(document.createElement('i'), { className: 'cfill' }));
+            const h = document.createElement('p');
+            h.className = 'cchap';
+            h.innerHTML = '<span>' + String(chapters[idx].n).padStart(2, '0') + '</span>' + chapters[idx].title;
+            frag.appendChild(h);
+          }
           const b = document.createElement('button');
           b.className = 'cframe';
           b.type = 'button';
           b.dataset.i = idx;
           b.setAttribute('aria-label', 'Open photograph ' + (idx + 1) + ' of ' + c.plain);
-          b.innerHTML = '<img src="' + PROJ(c.project, f, 700) + '" alt="' + c.plain +
-                        ', photographed in ' + c.place + ' by AKV Photography" ' +
-                        'loading="lazy" decoding="async">';
+          if (A) {
+            const r = (f[1] / f[2]).toFixed(4);
+            b.style.setProperty('--ar', r);
+            b.innerHTML = '<img src="' + ALBUM_SRC(A, f, 640) + '" srcset="' + ALBUM_SRCSET(A, f) + '" ' +
+                          'sizes="(min-width:1180px) 34vw, (min-width:720px) 46vw, 70vw" ' +
+                          'width="' + f[1] + '" height="' + f[2] + '" alt="' + alt + '" ' +
+                          'loading="lazy" decoding="async">';
+          } else {
+            b.innerHTML = '<img src="' + PROJ(c.project, f, 700) + '" alt="' + alt + '" ' +
+                          'loading="lazy" decoding="async">';
+          }
           frag.appendChild(b);
           frameObserver.observe(b);
         });
+        if (A) {
+          grid.querySelectorAll(':scope > .cfill.is-end').forEach((el) => el.remove());
+          frag.appendChild(Object.assign(document.createElement('i'), { className: 'cfill is-end' }));
+        }
         grid.appendChild(frag);
         shown += slice.length;
         btn.parentElement.classList.toggle('is-done', shown >= c.photos.length);
-        btn.textContent = 'See the other ' + (c.photos.length - shown) + ' photographs';
+        btn.textContent = A
+          ? 'Continue the story — ' + (c.photos.length - shown) + ' more photographs'
+          : 'See the other ' + (c.photos.length - shown) + ' photographs';
       };
 
-      render(FIRST);
+      /* a story album opens on whole chapters, so it never stops mid-scene */
+      render(A
+        ? (A.chapters.map((ch) => ch.from).find((f) => f >= FIRST) || c.photos.length)
+        : FIRST);
       btn.addEventListener('click', () => render(c.photos.length));
       grid.addEventListener('click', (e) => {
         const b = e.target.closest('.cframe');
@@ -901,7 +939,8 @@
       .map((c) => {
         const href = c.page + '.html#' + c.slug;
         return '<a class="wed" href="' + href + '">' +
-          '<div class="wed__media"><img src="' + PROJ(c.project, c.cover, 1000) + '" alt="' +
+          '<div class="wed__media"><img src="' +
+            (c.album ? ALBUM_SRC(c.album, c.photos[c.cover], 1080) : PROJ(c.project, c.cover, 1000)) + '" alt="' +
             c.plain + ', photographed in ' + c.place + ' by AKV Photography" ' +
             'loading="lazy" decoding="async"></div>' +
           '<div class="wed__body">' +

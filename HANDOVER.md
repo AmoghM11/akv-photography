@@ -178,3 +178,28 @@ which is what it did before.
       Justdial says 560076, WeddingWire 560078, WedMeGood 560083. All
       three map to the same point. The site uses **560076**, matching
       Justdial and their original website.
+
+---
+
+## Albums from the studio's originals (Oct 2026)
+
+The studio shared full-resolution albums on Google Drive. These are now
+served from this repo, not WedMeGood:
+
+| Album | Frames | Page |
+|---|---|---|
+| Gajalakshmi & Santhosh — wedding & reception | 111 | Weddings |
+| James & Supriya — engagement | 46 | Stories |
+
+- Files: `assets/photos/<album>/NNN-<original>-{640,1080,full}.webp`
+  (640/1080 wide for the grid, 2400px long edge for the lightbox, sRGB,
+  metadata stripped — about 55 KB / 125 KB / 500 KB each).
+- Order: the order the day happened (camera capture time), split into
+  chapters. Both live in `js/albums.js`; a couple entry in `js/data.js`
+  points at it with `album:` and picks its card photo with `cover:`.
+- Layout: these albums keep every photograph's own shape (no cropping),
+  in justified rows that read left to right, with a chapter title between
+  scenes.
+- To add the next batch: download the Drive folder, run `tools/process_albums.py`
+  over it (it sorts by capture time and writes the three sizes),
+  set the chapters, and add the album to `js/albums.js`.

@@ -752,6 +752,37 @@ body.locked{ overflow:hidden; }
    so a two-column, two-row span lands on the same grid lines as the rest */
 @media (min-width:720px){ .cgrid .cframe:first-child{ grid-column:span 2; grid-row:span 2; } }
 
+/* an album told as a story: frames run left to right, top to bottom,
+   in the order they were taken, each at its own shape — nothing is
+   cropped. Every frame grows in proportion to its aspect ratio, so a
+   row always shares one height. */
+.cgrid--story{
+  --row:180px; --gap:6px;
+  display:flex; flex-wrap:wrap; gap:var(--gap);
+}
+@media (min-width:720px){ .cgrid--story{ --row:250px; --gap:10px; } }
+@media (min-width:1180px){ .cgrid--story{ --row:280px; --gap:12px; } }
+.cgrid--story .cframe{
+  aspect-ratio:var(--ar); flex:var(--ar) 1 calc(var(--ar) * var(--row));
+  max-width:100%;
+}
+.cgrid--story .cframe:first-child{ grid-column:auto; grid-row:auto; }
+.cgrid--story .cframe:hover img{ transform:scale(1.03); }
+/* ends a chapter's last row at its natural height */
+.cfill{ flex:10000 1 0; height:0; }
+.cchap{
+  flex:0 0 100%; display:flex; align-items:baseline; gap:14px;
+  margin:clamp(28px,4vw,48px) 0 clamp(6px,1vw,12px);
+  font-family:var(--font-d); font-weight:300; font-style:italic; color:var(--ink);
+  font-size:clamp(22px,2.6vw,32px); line-height:1.1;
+}
+.cchap:first-child{ margin-top:0; }
+.cchap span{
+  font-family:var(--font-b); font-style:normal; font-size:11px; letter-spacing:.18em;
+  color:var(--brass); transform:translateY(-.3em);
+}
+.cchap::after{ content:''; flex:1; height:1px; background:var(--line-soft); align-self:center; }
+
 .couple__more{ display:flex; justify-content:center; margin-top:clamp(22px,3vw,34px); }
 .couple__more.is-done{ display:none; }
 

@@ -85,6 +85,16 @@ const PROJ = (id, file, w) => (SETUP.photos === 'local'
   ? SETUP.photoDir + file
   : `https://image.wedmegood.com/resized/${w || 800}X/uploads/project/${id}/${file}`);
 
+/* The studio's own albums (js/albums.js), served from this repo as
+   WebP: 640 and 1080 wide for the grid, 2400px on the long edge for
+   the lightbox. A frame is [stem, width, height]. Phones get the 1080
+   in the lightbox too — it already fills their screen. */
+const ALBUM_SRC = (a, f, w) => a.dir + f[0] + '-' + w + '.webp';
+const ALBUM_SRCSET = (a, f) => ALBUM_SRC(a, f, 640) + ' 640w, ' + ALBUM_SRC(a, f, 1080) + ' 1080w';
+const ALBUM_FULL = (a, f) => ((window.innerWidth * (window.devicePixelRatio || 1)) <= 1200
+  ? ALBUM_SRC(a, f, 1080)
+  : a.dir + f[0] + '-full.webp');
+
 const FILM = (id) => `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
 /* the studio's older uploads predate maxres stills */
 const FILM_HQ = (id) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
@@ -225,10 +235,25 @@ const AKV = {
   ],
 
   /* ---------------------------------------------------------------
-     The five couples. Engagements and pre-wedding stories live on
-     Stories, wedding days on Traditional.
+     The couples. Engagements and pre-wedding stories live on Stories,
+     wedding days on Weddings. An entry with `album` is served from the
+     studio's own originals (js/albums.js), in story order and in
+     chapters; `cover` is then the index of the frame on its card.
      --------------------------------------------------------------- */
   couples: [
+    {
+      slug: 'gajalakshmi-santhosh',
+      couple: 'Gajalakshmi &amp; Santhosh',
+      plain: 'Gajalakshmi and Santhosh',
+      place: 'Bangalore',
+      kind: 'Wedding',
+      page: 'films',
+      story: 'They met in the quiet in-between moments of busy lives - two hearts learning the rhythm of each other, one smile at a time. What started as small conversations grew into late-night confessions and shared dreams. Through distance, deadlines and doubts, their love stayed steady: soft when the world felt loud, strong when life felt heavy.',
+      /* the studio's own album - 111 frames, from the morning setup
+         to the reception, in the order the day happened */
+      album: 'gajalakshmi-and-santhosh',
+      cover: 65
+    },
     {
       slug: 'james-supriya',
       couple: 'James &amp; Supriya',
@@ -240,39 +265,13 @@ const AKV = {
       project: 321481,
       cover: '1771246459_DSC01597.jpg',
       photos: [
-        '1771246459_0A4A7069.jpg', '1771246459_DSC01597.jpg', '1771246460_0A4A7453.jpg',
-        '1771246460_0A4A7483.jpg', '1771246460_0A4A7609.jpg', '1771246460_0A4A7680.jpg',
-        '1771246460_0A4A7791.jpg', '1771246461_0A4A7814.jpg', '1771246461_0A4A8037.jpg',
-        '1771246461_DSC01262.jpg', '1771246461_DSC01310.jpg', '1771246461_DSC01528.jpg',
+        '1771246459_DSC01597.jpg', '1771246461_DSC01262.jpg', '1771246461_DSC01310.jpg', '1771246461_DSC01528.jpg',
         '1771246461_DSC01822.jpg', '1771246461_DSC01924.jpg', '1771246461_DSC02020.jpg',
         '1771246462_DSC01214.jpg', '1771246462_DSC01279.jpg', '1771246462_DSC01298.jpg',
         '1771246462_DSC01454.jpg', '1771246462_DSC01497.jpg', '1771246462_DSC01672.jpg',
         '1771246462_DSC01718.jpg', '1771246462_DSC01798.jpg', '1771246490_DSC01526.jpg',
         '1771246491_DSC01433.jpg', '1771246491_DSC01452.jpg', '1771246491_DSC01613.jpg',
         '1771246491_DSC01648.jpg', '1771246491_DSC01809.jpg', '1771246491_DSC01890.jpg'
-      ]
-    },
-    {
-      slug: 'gajalakshmi-santhosh',
-      couple: 'Gajalakshmi &amp; Santhosh',
-      plain: 'Gajalakshmi and Santhosh',
-      place: 'Bangalore',
-      kind: 'Wedding',
-      page: 'films',
-      story: 'They met in the quiet in-between moments of busy lives - two hearts learning the rhythm of each other, one smile at a time. What started as small conversations grew into late-night confessions and shared dreams. Through distance, deadlines and doubts, their love stayed steady: soft when the world felt loud, strong when life felt heavy.',
-      project: 321470,
-      cover: '1771236134_DSC04318.jpg',
-      photos: [
-        '1771236096_DSC04631.jpg', '1771236100_DSC04083.jpg', '1771236101_DSC04198.jpg',
-        '1771236101_DSC04234.jpg', '1771236102_DSC04186.jpg', '1771236134_DSC04306.jpg',
-        '1771236134_DSC04317.jpg', '1771236134_DSC04318.jpg', '1771236134_DSC04322.jpg',
-        '1771236134_DSC04698.jpg', '1771236136_DSC04278.jpg', '1771236136_DSC05043.jpg',
-        '1771236137_DSC04291.jpg', '1771236138_DSC03596.jpg', '1771236138_DSC04672.jpg',
-        '1771236138_DSC04763.jpg', '1771236167_DSC04528.jpg', '1771236168_DSC03502.jpg',
-        '1771236168_DSC03516.jpg', '1771236169_DSC03384.jpg', '1771236169_DSC03418.jpg',
-        '1771236169_DSC04157.jpg', '1771236169_DSC04222.jpg', '1771236169_DSC04690.jpg',
-        '1771236169_DSC04706.jpg', '1771236169_DSC04746.jpg', '1771236169_DSC04766.jpg',
-        '1771236169_DSC04799.jpg', '1771236169_DSC05030.jpg', '1771236170_DSC04597.jpg'
       ]
     },
     {
@@ -294,6 +293,18 @@ const AKV = {
         '1771063786_0A4A2832.jpg', '1771063786_0A4A2846.jpg', '1771063863_0A4A3437.jpg',
         '1771063863_0A4A3603.jpg', '1771063864_0A4A3535.jpg'
       ]
+    },
+    {
+      slug: 'james-supriya-engagement',
+      couple: 'James &amp; Supriya',
+      plain: 'James and Supriya',
+      place: 'Bangalore',
+      kind: 'Engagement',
+      page: 'stories',
+      /* written from the album itself - the order of the afternoon as it was shot */
+      story: 'The afternoon they made it official - a garden, an arch of white flowers and both families close by. The portraits came first, while the light was soft; then the rings, the garlands and the cake, and the last frames as the evening came in.',
+      album: 'james-and-supriya-engagement',
+      cover: 29
     },
     {
       slug: 'deeksha-jatin',
@@ -536,3 +547,10 @@ const AKV = {
     IMG('1771252434_AKV_0817.jpg'), IMG('1771408426_1000216855.jpg')
   ]
 };
+
+/* Albums from the studio's originals: the frames come from js/albums.js */
+AKV.couples.forEach((c) => {
+  if (!c.album) return;
+  c.album = ALBUMS[c.album];
+  c.photos = c.album.frames;
+});
