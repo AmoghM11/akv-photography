@@ -167,9 +167,9 @@
     if (!S.logo && !S.logoLight && !S.logoMark) return;
     const h = S.logoHeight || 34;
 
-    const img = (src, extra) =>
+    const img = (src, extra, height) =>
       '<img src="' + src + '" alt="' + AKV.brand.name + '" ' +
-      'style="height:' + h + 'px;width:auto;display:block;' + (extra || '') + '">';
+      'style="height:' + (height || h) + 'px;width:auto;display:block;' + (extra || '') + '">';
 
     /* A full lockup carries the name, so it replaces the whole brand.
        A bare mark replaces only the aperture and leaves the name set
@@ -189,7 +189,7 @@
     const footName = $('.footer__brand .nav__name');
     const footSrc = S.logoLight || S.logo;
     if (footName && footSrc) {
-      footName.outerHTML = img(footSrc, 'margin-bottom:14px;');
+      footName.outerHTML = img(footSrc, 'margin-bottom:18px;', S.logoFooterHeight);
     }
   })();
 
@@ -269,9 +269,9 @@
      --------------------------------------------------------- */
   (function pageHeroBand() {
     $$('[data-band]').forEach((band) => {
-      const files = band.dataset.band.split(',').map((s) => s.trim()).filter(Boolean);
-      band.innerHTML = files
-        .map((f) => '<figure><img src="' + IMG(f, 700) + '" alt="" loading="lazy" decoding="async"></figure>')
+      const srcs = AKV.bands[band.dataset.band] || [];
+      band.innerHTML = srcs
+        .map((src) => '<figure><img src="' + src + '" alt="" loading="lazy" decoding="async"></figure>')
         .join('');
     });
   })();
@@ -282,9 +282,8 @@
   (function strip() {
     const track = $('#strip-track');
     if (!track) return;
-    const picks = AKV.gallery.slice(0, 18);
-    const html = picks
-      .map((g) => '<img src="' + IMG(g[0], 450) + '" alt="" loading="lazy" decoding="async">')
+    const html = AKV.strip
+      .map((src) => '<img src="' + src + '" alt="" loading="lazy" decoding="async">')
       .join('');
     track.innerHTML = html + html; /* duplicated for a seamless loop */
   })();
@@ -520,7 +519,8 @@
 
     const close = () => {
       lb.hidden = true;
-      document.body.classList.remove('locked');
+      /* a story's gallery may still be open underneath */
+      if (!$('.sgallery:not([hidden])')) document.body.classList.remove('locked');
       img.removeAttribute('src');
       clearFilm();
       if (lastFocus) lastFocus.focus();
@@ -559,7 +559,8 @@
     lb.addEventListener('click', (e) => { if (e.target === lb) close(); });
     document.addEventListener('keydown', (e) => {
       if (lb.hidden) return;
-      if (e.key === 'Escape') close();
+      /* Escape closes the photograph only, not the gallery behind it */
+      if (e.key === 'Escape') { close(); e.stopImmediatePropagation(); return; }
       if (mode !== 'photo') return;
       if (e.key === 'ArrowLeft') showAt(idx - 1);
       if (e.key === 'ArrowRight') showAt(idx + 1);
@@ -575,7 +576,6 @@
     const masonry = $('#masonry');
     if (!masonry) return;
 
-    const LABELS = { w: 'Wedding', r: 'Reception', c: 'Couples & Portraits', m: 'Candid Moment' };
     const BATCH = 40;
     const moreBtn = $('#load-more');
     const filterBox = $('#filters');
@@ -585,13 +585,9 @@
     let view = [];
 
     const computeView = () =>
-      (view = filter === 'all' ? AKV.gallery.slice() : AKV.gallery.filter((g) => g[1] === filter));
+      (view = filter === 'all' ? AKV.gallery.slice() : AKV.gallery.filter((g) => g.tag === filter));
 
-    const asViewerItems = () => view.map((g) => ({
-      src: IMG(g[0], 1600),
-      alt: LABELS[g[1]] + ' photographed by AKV Photography',
-      cap: LABELS[g[1]]
-    }));
+    const asViewerItems = () => view.map((g) => ({ src: g.full, alt: g.alt, cap: g.cap }));
 
     const renderBatch = () => {
       const slice = view.slice(shown, shown + BATCH);
@@ -602,9 +598,9 @@
         b.className = 'shot';
         b.type = 'button';
         b.dataset.i = idx;
-        b.setAttribute('aria-label', 'Open photograph ' + (idx + 1) + ' — ' + LABELS[g[1]]);
-        b.innerHTML = '<img src="' + IMG(g[0], 450) + '" alt="' + LABELS[g[1]] +
-                      ' photographed by AKV Photography" loading="lazy" decoding="async">';
+        b.setAttribute('aria-label', 'Open photograph ' + (idx + 1) + ' — ' + g.cap);
+        b.innerHTML = '<img src="' + g.thumb + '" width="' + g.w + '" height="' + g.h + '" alt="' + g.alt +
+                      '" loading="lazy" decoding="async">';
         frag.appendChild(b);
         frameObserver.observe(b);
       });
@@ -758,152 +754,199 @@
   })();
 
   /* ---------------------------------------------------------
-     The five couples. A page asks for the ones that belong to
-     it with data-couples="stories" or data-couples="traditional".
+     The couples, one story each. A page asks for its set with
+     data-couples="all" (every couple) or data-couples="films"
+     (the wedding days). A story shows its introduction and the
+     album's opening frames; "View full gallery" opens the whole
+     album in a sheet over the same page, in album order: the
+     opening frames, each of the two on their own, the day itself,
+     then the couple. A couple with no album yet keeps blank frames
+     where the photographs will go.
      --------------------------------------------------------- */
   (function couples() {
     const mount = $('[data-couples]');
     if (!mount) return;
 
     const which = mount.dataset.couples;
-    const set = AKV.couples.filter((c) => c.page === which);
-    const FIRST = 12;
+    const set = which === 'all' ? AKV.couples : AKV.couples.filter((c) => c.page === which);
+    const PREVIEW = 6;
+    const bySlug = {};
+    set.forEach((c) => { bySlug[c.slug] = c; });
+
+    const count = (n) => n + ' photograph' + (n === 1 ? '' : 's');
+    const altOf = (c) => c.plain + ', photographed by AKV Photography';
+
+    /* one frame at its own shape, in a justified row */
+    const frame = (c, f, i, sizes) =>
+      '<button class="cframe" type="button" data-slug="' + c.slug + '" data-i="' + i + '" ' +
+        'style="--ar:' + (f[1] / f[2]).toFixed(4) + '" ' +
+        'aria-label="Open photograph ' + (i + 1) + ' of ' + c.plain + '">' +
+        '<img src="' + ALBUM_SRC(c.album, f, 640) + '" srcset="' + ALBUM_SRCSET(c.album, f) + '" ' +
+          'sizes="' + sizes + '" width="' + f[1] + '" height="' + f[2] + '" alt="' + altOf(c) + '" ' +
+          'loading="lazy" decoding="async">' +
+      '</button>';
+
+    const viewerItems = (c) => c.photos.map((f) => ({
+      src: ALBUM_FULL(c.album, f),
+      alt: altOf(c),
+      cap: c.plain + ' · ' + c.kind
+    }));
 
     mount.innerHTML = set
-      .map((c) =>
-        '<article class="couple" id="' + c.slug + '" data-slug="' + c.slug + '">' +
+      .map((c) => {
+        const n = c.photos.length;
+        const facts = [c.date, n ? count(n) : ''].filter(Boolean).join(' &middot; ');
+        const preview = n
+          ? '<div class="cgrid cgrid--story">' +
+              c.photos.slice(0, Math.min(c.album.parts.intro, PREVIEW))
+                .map((f, i) => frame(c, f, i, '(min-width:1180px) 26vw, (min-width:720px) 34vw, 60vw'))
+                .join('') +
+              '<i class="cfill"></i>' +
+            '</div>'
+          : '<div class="sblank" aria-hidden="true"><i></i><i></i><i></i></div>';
+        const actions =
+          (n ? '<button class="btn" type="button" data-gallery="' + c.slug + '">View full gallery' +
+                '<span class="couple__n">' + n + '</span></button>' : '') +
+          (c.film
+            ? '<button class="btn btn--ghost couple__film" type="button" ' +
+                'data-film="' + c.film + '" data-label="' + plain(c.couple) + ' — ' + plain(c.filmLabel) + '">' +
+                '<span class="couple__filmicon" aria-hidden="true">' + PLAY + '</span>Watch their film</button>'
+            : '');
+
+        return '<article class="couple" id="' + c.slug + '">' +
           '<header class="couple__head">' +
             '<div class="reveal">' +
               '<p class="couple__kind">' + c.place + ' &middot; ' + c.kind + '</p>' +
               '<h2 class="couple__name">' + c.couple + '</h2>' +
+              (facts ? '<p class="couple__count">' + facts + '</p>' : '') +
             '</div>' +
             '<div class="reveal">' +
               '<p class="couple__story">' + c.story + '</p>' +
-              '<p class="couple__count">' + c.photos.length + ' photographs from the day</p>' +
-              (c.film
-                ? '<button class="btn btn--ghost btn--sm couple__film" type="button" ' +
-                    'data-film="' + c.film + '" data-label="' + plain(c.couple) + ' — ' +
-                    plain(c.filmLabel) + '">' +
-                    '<span class="couple__filmicon" aria-hidden="true">' + PLAY + '</span>' +
-                    'Watch their film</button>'
+              (c.day ? '<p class="couple__story">' + c.day + '</p>' : '') +
+              (c.quote
+                ? '<blockquote class="couple__quote"><p>&ldquo;' + c.quote.text + '&rdquo;</p>' +
+                    '<cite>' + c.quote.by + '</cite></blockquote>'
                 : '') +
             '</div>' +
           '</header>' +
-          '<div class="cgrid" data-grid="' + c.slug + '"></div>' +
-          '<div class="couple__more"><button class="btn btn--ghost btn--sm" type="button" ' +
-            'data-more="' + c.slug + '">See the rest of the album</button></div>' +
-        '</article>')
+          preview +
+          (actions ? '<div class="couple__more">' + actions + '</div>' : '') +
+        '</article>';
+      })
       .join('');
+
+    $$('.cframe', mount).forEach((el) => frameObserver.observe(el));
+
+    /* --- the full gallery: a sheet over the page, not a new page --- */
+    const sheet = document.createElement('div');
+    sheet.className = 'sgallery';
+    sheet.hidden = true;
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-modal', 'true');
+    sheet.setAttribute('aria-labelledby', 'sgallery-title');
+    sheet.innerHTML =
+      '<header class="sgallery__bar">' +
+        '<div class="sgallery__head">' +
+          '<p class="couple__kind" id="sgallery-kind"></p>' +
+          '<h2 class="sgallery__title" id="sgallery-title"></h2>' +
+        '</div>' +
+        '<button class="sgallery__close" type="button" aria-label="Close gallery">&times;</button>' +
+      '</header>' +
+      '<div class="sgallery__body"><div class="cgrid cgrid--story" id="sgallery-grid"></div></div>';
+    document.body.appendChild(sheet);
+
+    const grid = $('#sgallery-grid', sheet);
+    const closeBtn = $('.sgallery__close', sheet);
+    let current = null;
+    let opener = null;
+    /* opened straight from a shared link, so there is no page behind it in history */
+    let deep = false;
+
+    const show = (slug) => {
+      const c = bySlug[slug];
+      if (!c || !c.photos.length) return false;
+      current = c;
+      $('#sgallery-kind', sheet).innerHTML = c.place + ' &middot; ' + c.kind + ' &middot; ' + count(c.photos.length);
+      $('#sgallery-title', sheet).innerHTML = c.couple;
+      grid.innerHTML = c.photos
+        .map((f, i) => frame(c, f, i, '(min-width:1180px) 30vw, (min-width:720px) 40vw, 70vw'))
+        .join('') + '<i class="cfill"></i>';
+      sheet.hidden = false;
+      sheet.scrollTop = 0;
+      document.body.classList.add('locked');
+      $$('.cframe', grid).forEach((el) => frameObserver.observe(el));
+      closeBtn.focus();
+      return true;
+    };
+
+    const hide = () => {
+      if (sheet.hidden) return;
+      sheet.hidden = true;
+      grid.innerHTML = '';
+      current = null;
+      document.body.classList.remove('locked');
+      if (opener) { opener.focus(); opener = null; }
+    };
+
+    /* the gallery takes a history entry, so a phone's back button
+       closes it instead of leaving the page */
+    const open = (slug, btn) => {
+      opener = btn || null;
+      if (!show(slug)) return;
+      deep = false;
+      history.pushState({ akvGallery: slug }, '', '#' + slug + '/gallery');
+    };
+
+    const close = () => {
+      if (sheet.hidden) return;
+      if (!deep && history.state && history.state.akvGallery) { history.back(); return; }
+      deep = false;
+      history.replaceState(null, '', '#' + current.slug);
+      hide();
+    };
+
+    window.addEventListener('popstate', () => {
+      const st = history.state;
+      if (st && st.akvGallery) { if (sheet.hidden) show(st.akvGallery); }
+      else hide();
+    });
 
     mount.addEventListener('click', (e) => {
+      const g = e.target.closest('[data-gallery]');
+      if (g) { open(g.dataset.gallery, g); return; }
       const f = e.target.closest('[data-film]');
-      if (f) viewer.openFilm(f.dataset.film, f.dataset.label);
-    });
-
-    set.forEach((c) => {
-      const grid = $('[data-grid="' + c.slug + '"]', mount);
-      const btn = $('[data-more="' + c.slug + '"]', mount);
-      let shown = 0;
-
-      const A = c.album;
-      const alt = c.plain + ', photographed in ' + c.place + ' by AKV Photography';
-      /* chapter titles, keyed by the frame each one opens on */
-      const chapters = {};
-      if (A) {
-        grid.classList.add('cgrid--story');
-        A.chapters.forEach((ch, n) => { chapters[ch.from] = { n: n + 1, title: ch.title }; });
-      }
-
-      const items = c.photos.map((f) => ({
-        src: A ? ALBUM_FULL(A, f) : PROJ(c.project, f, 1600),
-        alt: alt,
-        cap: c.plain + ' · ' + c.kind
-      }));
-
-      const render = (n) => {
-        const slice = c.photos.slice(shown, shown + n);
-        const frag = document.createDocumentFragment();
-        slice.forEach((f, i) => {
-          const idx = shown + i;
-          if (A && chapters[idx]) {
-            /* close the row before it, so the last frames of a chapter
-               keep their height instead of stretching across the page */
-            if (idx > 0) frag.appendChild(Object.assign(document.createElement('i'), { className: 'cfill' }));
-            const h = document.createElement('p');
-            h.className = 'cchap';
-            h.innerHTML = '<span>' + String(chapters[idx].n).padStart(2, '0') + '</span>' + chapters[idx].title;
-            frag.appendChild(h);
-          }
-          const b = document.createElement('button');
-          b.className = 'cframe';
-          b.type = 'button';
-          b.dataset.i = idx;
-          b.setAttribute('aria-label', 'Open photograph ' + (idx + 1) + ' of ' + c.plain);
-          if (A) {
-            const r = (f[1] / f[2]).toFixed(4);
-            b.style.setProperty('--ar', r);
-            b.innerHTML = '<img src="' + ALBUM_SRC(A, f, 640) + '" srcset="' + ALBUM_SRCSET(A, f) + '" ' +
-                          'sizes="(min-width:1180px) 34vw, (min-width:720px) 46vw, 70vw" ' +
-                          'width="' + f[1] + '" height="' + f[2] + '" alt="' + alt + '" ' +
-                          'loading="lazy" decoding="async">';
-          } else {
-            b.innerHTML = '<img src="' + PROJ(c.project, f, 700) + '" alt="' + alt + '" ' +
-                          'loading="lazy" decoding="async">';
-          }
-          frag.appendChild(b);
-          frameObserver.observe(b);
-        });
-        if (A) {
-          grid.querySelectorAll(':scope > .cfill.is-end').forEach((el) => el.remove());
-          frag.appendChild(Object.assign(document.createElement('i'), { className: 'cfill is-end' }));
-        }
-        grid.appendChild(frag);
-        shown += slice.length;
-        btn.parentElement.classList.toggle('is-done', shown >= c.photos.length);
-        btn.textContent = A
-          ? 'Continue the story — ' + (c.photos.length - shown) + ' more photographs'
-          : 'See the other ' + (c.photos.length - shown) + ' photographs';
-      };
-
-      /* a story album opens on whole chapters, so it never stops mid-scene */
-      render(A
-        ? (A.chapters.map((ch) => ch.from).find((f) => f >= FIRST) || c.photos.length)
-        : FIRST);
-      btn.addEventListener('click', () => render(c.photos.length));
-      grid.addEventListener('click', (e) => {
-        const b = e.target.closest('.cframe');
-        if (b) viewer.openPhotos(items, +b.dataset.i);
-      });
-    });
-  })();
-
-  /* ---------------------------------------------------------
-     Archive frames — sections still waiting on their own set
-     --------------------------------------------------------- */
-  (function archive() {
-    const grid = $('#archive-grid');
-    if (!grid) return;
-
-    const items = AKV.archiveFrames.map((src) => ({
-      src: src.replace('/800X/', '/1600X/'),
-      alt: 'A frame from the AKV Photography archive',
-      cap: 'From the studio archive'
-    }));
-
-    grid.innerHTML = AKV.archiveFrames
-      .map((src, i) =>
-        '<button class="cframe" type="button" data-i="' + i + '" ' +
-          'aria-label="Open archive photograph ' + (i + 1) + '">' +
-          '<img src="' + src.replace('/800X/', '/700X/') + '" ' +
-          'alt="A frame from the AKV Photography archive" loading="lazy" decoding="async">' +
-        '</button>')
-      .join('');
-
-    $$('.cframe', grid).forEach((el) => frameObserver.observe(el));
-    grid.addEventListener('click', (e) => {
+      if (f) { viewer.openFilm(f.dataset.film, f.dataset.label); return; }
       const b = e.target.closest('.cframe');
-      if (b) viewer.openPhotos(items, +b.dataset.i);
+      if (b) viewer.openPhotos(viewerItems(bySlug[b.dataset.slug]), +b.dataset.i);
     });
+
+    sheet.addEventListener('click', (e) => {
+      if (e.target.closest('.sgallery__close')) { close(); return; }
+      const b = e.target.closest('.cframe');
+      if (b && current) viewer.openPhotos(viewerItems(current), +b.dataset.i);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (sheet.hidden) return;
+      if (e.key === 'Escape') { close(); return; }
+      /* keep Tab inside the sheet while it is open */
+      if (e.key === 'Tab' && $('#lightbox').hidden) {
+        const all = $$('button', sheet);
+        const first = all[0];
+        const last = all[all.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    });
+
+    /* a shared link to a gallery opens it over its story */
+    const m = location.hash.match(/^#([\w-]+)\/gallery$/);
+    if (m && bySlug[m[1]]) {
+      const story = document.getElementById(m[1]);
+      if (story) story.scrollIntoView();
+      history.replaceState({ akvGallery: m[1] }, '');
+      if (show(m[1])) deep = true;
+    }
   })();
 
   /* ---------------------------------------------------------
@@ -915,12 +958,12 @@
 
     box.innerHTML = AKV.couples
       .map((c) => {
-        const href = c.page + '.html#' + c.slug;
+        const href = 'stories.html#' + c.slug;
         return '<a class="cidx reveal" href="' + href + '">' +
           '<p class="cidx__kind">' + c.place + ' &middot; ' + c.kind + '</p>' +
           '<h3 class="cidx__name">' + c.couple + '</h3>' +
           '<p class="cidx__story">' + c.story + '</p>' +
-          '<p class="cidx__go">' + c.photos.length + ' photographs ' +
+          '<p class="cidx__go">' + (c.photos.length ? c.photos.length + ' photographs ' : 'Their story ') +
             '<i aria-hidden="true">&rarr;</i></p>' +
         '</a>';
       })
@@ -928,8 +971,8 @@
   })();
 
   /* ---------------------------------------------------------
-     Real weddings rail — every couple, each one a link to the
-     page that carries their album.
+     Real weddings rail — every couple, each one a link to its
+     story. A couple with no album yet keeps a blank frame.
      --------------------------------------------------------- */
   (function rail() {
     const box = $('#rail');
@@ -937,17 +980,19 @@
 
     box.innerHTML = AKV.couples
       .map((c) => {
-        const href = c.page + '.html#' + c.slug;
+        const href = 'stories.html#' + c.slug;
+        const cover = c.album ? (c.photos.find((f) => f[0] === c.cover) || c.photos[0]) : null;
         return '<a class="wed" href="' + href + '">' +
-          '<div class="wed__media"><img src="' +
-            (c.album ? ALBUM_SRC(c.album, c.photos[c.cover], 1080) : PROJ(c.project, c.cover, 1000)) + '" alt="' +
-            c.plain + ', photographed in ' + c.place + ' by AKV Photography" ' +
-            'loading="lazy" decoding="async"></div>' +
+          '<div class="wed__media">' + (cover
+            ? '<img src="' + ALBUM_SRC(c.album, cover, 1080) + '" alt="' +
+                c.plain + ', photographed in ' + c.place + ' by AKV Photography" ' +
+                'loading="lazy" decoding="async">'
+            : '') + '</div>' +
           '<div class="wed__body">' +
             '<p class="wed__place">' + c.place + ' &middot; ' + c.kind + '</p>' +
             '<h3 class="wed__couple">' + c.couple + '</h3>' +
             '<p class="wed__story">' + c.story + '</p>' +
-            '<span class="wed__go">See the album <i aria-hidden="true">&rarr;</i></span>' +
+            '<span class="wed__go">See their story <i aria-hidden="true">&rarr;</i></span>' +
           '</div>' +
         '</a>';
       })

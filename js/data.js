@@ -8,9 +8,10 @@
      Justdial     https://www.justdial.com/Bangalore/AKV-Photography-...-G5A2_BZDET
      WeddingWire  https://www.weddingwire.in/wedding-photographers/akv-photography--e77368
 
-   PHOTOGRAPHY: every image is still pulled from the studio's WedMeGood
-   library. When the high-resolution originals arrive, put them in
-   assets/photos/ and flip SETUP.photos to 'local' - see HANDOVER.md.
+   PHOTOGRAPHY: every photograph on the site comes from the studio's own
+   albums (js/albums.js), served from assets/photos/. Nothing is pulled
+   from the directory listings any more. A couple with no album yet
+   shows blank frames until theirs arrives - see HANDOVER.md.
 
    EMAIL is deliberately absent until the studio confirms the public inbox. */
 
@@ -22,12 +23,8 @@
 const SETUP = {
 
   /* --- PHOTOGRAPHS -------------------------------------------------
-     'wedmegood' streams from the studio's directory library (today).
-     'local'     serves this repo's own assets/photos/ folder.
-     Drop the studio's files into assets/photos/ keeping the filenames
-     listed in HANDOVER.md, flip this to 'local', and every page on the
-     site follows. Nothing else changes. */
-  photos: 'wedmegood',
+     Where the album folders live. Each album is a folder of WebP files
+     made by tools/process_albums.py, listed in js/albums.js. */
   photoDir: 'assets/photos/',
 
   /* --- LOGO --------------------------------------------------------
@@ -41,10 +38,14 @@ const SETUP = {
                    "AKV Photography" beside it stays
      One file is enough. Whatever is missing falls back to what is set,
      and with all three blank the drawn aperture simply stays. */
-  logo: '',
-  logoLight: '',
+  /* the studio's own logo (Oct 2026), drawn from their vector PDF:
+     the mark beside the wordmark for the nav, the full stacked logo
+     with its tagline, reversed, for the dark footer */
+  logo: 'assets/brand/logo-row.svg',
+  logoLight: 'assets/brand/logo-light.svg',
   logoMark: '',
-  logoHeight: 34,
+  logoHeight: 38,
+  logoFooterHeight: 104,
 
   /* --- FOUNDER PORTRAIT --------------------------------------------
      A photograph of Anil for the About page. Blank leaves the card as
@@ -75,15 +76,12 @@ const SETUP = {
   }
 };
 
-/* Photographs resolve through SETUP — the studio's library today, this
-   repo's own folder the moment the originals land. */
-const IMG = (file, w) => (SETUP.photos === 'local'
-  ? SETUP.photoDir + file
-  : `https://image.wedmegood.com/resized/${w || 800}X/uploads/member/210942/${file}`);
-
-const PROJ = (id, file, w) => (SETUP.photos === 'local'
-  ? SETUP.photoDir + file
-  : `https://image.wedmegood.com/resized/${w || 800}X/uploads/project/${id}/${file}`);
+/* One photograph from an album folder, by its file stem: 640 or 1080
+   wide, or 'full' (2400px on the long edge). G and J name the two
+   albums the studio has sent so far. */
+const PHOTO = (album, stem, w) => SETUP.photoDir + album + '/' + stem + '-' + (w || 1080) + '.webp';
+const G = (stem, w) => PHOTO('gajalakshmi-and-santhosh', stem, w);
+const J = (stem, w) => PHOTO('james-and-supriya-engagement', stem, w);
 
 /* The studio's own albums (js/albums.js), served from this repo as
    WebP: 640 and 1080 wide for the grid, 2400px on the long edge for
@@ -167,22 +165,39 @@ const AKV = {
       { value: '14', label: 'Years behind the lens' },
       { value: '4.9', label: 'Average client rating' }
     ],
-    /* the hero panel advances through these, frame by frame - unchanged */
+    /* the hero panel advances through these, frame by frame */
     slides: [
-      { src: IMG('1771252263_DSC07531.jpg', 1400), alt: 'A bride photographed in soft daylight by AKV Photography' },
-      { src: IMG('1771252717_AKV_2704.jpg', 1400), alt: 'A couple during their wedding portraits' },
-      { src: IMG('1771250831_MPM08318_Edit.jpg', 1400), alt: 'A candid moment during a Bangalore wedding ceremony' },
-      { src: IMG('1771408299_1000216873.jpg', 1400), alt: 'Bridal detail photographed close up' }
+      { src: G('065-dsc04306'), alt: 'Gajalakshmi and Santhosh laughing together in the garden on their wedding day' },
+      { src: G('090-dsc04694'), alt: 'Gajalakshmi in her red reception lehenga, photographed under string lights' },
+      { src: J('006-0a4a6959'), alt: 'James and Supriya on the afternoon of their engagement' },
+      { src: G('083-dsc04661'), alt: 'Gajalakshmi and Santhosh photographed at night before their reception' }
     ]
   },
 
   craft: {
     shuffle: [
-      IMG('1771252263_DSC07531.jpg'),
-      IMG('1771252717_AKV_2704.jpg'),
-      IMG('1771250831_MPM08318_Edit.jpg'),
-      IMG('1771408299_1000216873.jpg')
+      G('071-dsc04383'),
+      J('015-0a4a7281'),
+      G('081-dsc04631'),
+      G('044-dsc03416')
     ]
+  },
+
+  /* the film strip on the home page */
+  strip: [
+    G('001-dsc02782', 640), G('039-dsc03377', 640), G('065-dsc04306', 640), G('086-dsc04678', 640),
+    J('005-0a4a6952', 640), G('047-dsc03598', 640), G('071-dsc04383', 640), J('021-0a4a7609', 640),
+    G('098-dsc04802', 640), G('108-dsc05009', 640), J('034-0a4a7928', 640), G('044-dsc03416', 640),
+    G('063-dsc04278', 640), J('029-0a4a7814', 640), G('081-dsc04631', 640), G('019-dsc02934', 640),
+    J('011-0a4a7069', 640), G('093-dsc04706', 640)
+  ],
+
+  /* the four frames under each page title: <div data-band="stories"> */
+  bands: {
+    stories: [J('008-0a4a6994', 640), G('070-dsc04378', 640), J('022-0a4a7640', 640), G('073-dsc04391', 640)],
+    films: [G('039-dsc03377', 640), G('037-dsc03303', 640), G('045-dsc03424', 640), G('048-dsc04083', 640)],
+    traditional: [G('025-dsc03078', 640), G('038-dsc03305', 640), G('041-dsc03397', 640), G('026-dsc03087', 640)],
+    about: [G('001-dsc02782', 640), J('001-0a4a6928', 640), G('005-dsc02858', 640), G('018-dsc02899', 640)]
   },
 
   pillars: [
@@ -196,19 +211,19 @@ const AKV = {
       step: '01',
       title: 'We talk first',
       body: 'Before a single frame - dates, venues, families, the rituals that matter most and the ones you would rather we photograph from a distance. Anil personally builds a shoot storyline for the event, so nothing is improvised on the day.',
-      image: IMG('1771249911_MPM01417_Edit.jpg', 1400)
+      image: G('002-dsc02787')
     },
     {
       step: '02',
       title: 'We shoot without interrupting',
       body: 'Candid and traditional, side by side. Our team moves quietly through the muhurtham, the mehendi, the reception - never blocking a ritual, never staging a moment that was already happening. Drone, live streaming and photobooth on request.',
-      image: IMG('1771247516_Reception__322_.jpg', 1400)
+      image: G('038-dsc03305')
     },
     {
       step: '03',
       title: 'We deliver in four weeks',
       body: 'Colour-graded photographs, candid and traditional films, and hand-sequenced albums. Standard delivery is four weeks from the last event day - and you will not have to chase us for it.',
-      image: IMG('1771252990_AKV_9270_Edit.jpg', 1400)
+      image: G('092-dsc04704')
     }
   ],
 
@@ -235,10 +250,14 @@ const AKV = {
   ],
 
   /* ---------------------------------------------------------------
-     The couples. Engagements and pre-wedding stories live on Stories,
-     wedding days on Weddings. An entry with `album` is served from the
-     studio's own originals (js/albums.js), in story order and in
-     chapters; `cover` is then the index of the frame on its card.
+     The couples. Every one of them is on the Stories page, in this
+     order; the wedding days (page: 'films') are on Weddings too.
+       story  - the introduction, shown beside the couple's name
+       day    - optional second paragraph, what the album itself shows
+       quote  - optional words from the couple, verbatim from a review
+       album  - the key of their album in js/albums.js. Without one the
+                couple shows blank frames until the photographs arrive.
+       cover  - the file stem of the frame on their home-page card
      --------------------------------------------------------------- */
   couples: [
     {
@@ -248,51 +267,13 @@ const AKV = {
       place: 'Bangalore',
       kind: 'Wedding',
       page: 'films',
+      date: '5 September 2025',
       story: 'They met in the quiet in-between moments of busy lives - two hearts learning the rhythm of each other, one smile at a time. What started as small conversations grew into late-night confessions and shared dreams. Through distance, deadlines and doubts, their love stayed steady: soft when the world felt loud, strong when life felt heavy.',
-      /* the studio's own album - 111 frames, from the morning setup
-         to the reception, in the order the day happened */
+      /* written from the album itself */
+      day: 'The day began early in a garden venue - a brass Ganesha at the gate, a hand-painted Kalyanam board and a white mandap hung with jasmine and red roses. The muhurtham followed with both families close around it. By evening the two of them had changed into red and grey for portraits under the string lights, and the night ended on a reception stage of white flowers.',
+      quote: { text: 'From the very first conversation to the final delivery of our pictures, the entire photography team was nothing short of exceptional.', by: 'Gajalakshmi Rajendran' },
       album: 'gajalakshmi-and-santhosh',
-      cover: 65
-    },
-    {
-      slug: 'james-supriya',
-      couple: 'James &amp; Supriya',
-      plain: 'James and Supriya',
-      place: 'Bangalore',
-      kind: 'Wedding',
-      page: 'films',
-      story: 'Through late-night talks, spontaneous adventures, and everyday moments in between, their love grew stronger and deeper. Surrounded by family and friends, they celebrated not just a wedding - but a partnership built on trust, friendship, and unwavering love.',
-      project: 321481,
-      cover: '1771246459_DSC01597.jpg',
-      photos: [
-        '1771246459_DSC01597.jpg', '1771246461_DSC01262.jpg', '1771246461_DSC01310.jpg', '1771246461_DSC01528.jpg',
-        '1771246461_DSC01822.jpg', '1771246461_DSC01924.jpg', '1771246461_DSC02020.jpg',
-        '1771246462_DSC01214.jpg', '1771246462_DSC01279.jpg', '1771246462_DSC01298.jpg',
-        '1771246462_DSC01454.jpg', '1771246462_DSC01497.jpg', '1771246462_DSC01672.jpg',
-        '1771246462_DSC01718.jpg', '1771246462_DSC01798.jpg', '1771246490_DSC01526.jpg',
-        '1771246491_DSC01433.jpg', '1771246491_DSC01452.jpg', '1771246491_DSC01613.jpg',
-        '1771246491_DSC01648.jpg', '1771246491_DSC01809.jpg', '1771246491_DSC01890.jpg'
-      ]
-    },
-    {
-      slug: 'esha-sanjay',
-      couple: 'Dr Esha &amp; Dr Sanjay',
-      plain: 'Dr Esha and Dr Sanjay',
-      place: 'Bangalore',
-      kind: 'Wedding',
-      page: 'films',
-      story: 'Two healers found their forever in each other. Their wedding was a blend of calm strength and quiet romance - where steady hands that save lives learned to hold on to love. From soft smiles during the vows to teary glances shared between rituals, every moment felt intentional, and the families wrapped the whole day in pride.',
-      project: 321418,
-      cover: '1771063863_0A4A3603.jpg',
-      photos: [
-        '1771063367_0A4A1667.jpg', '1771063367_0A4A1887.jpg', '1771063368_0A4A1659.jpg',
-        '1771063368_0A4A1707.jpg', '1771063368_0A4A1716.jpg', '1771063368_0A4A1873.jpg',
-        '1771063641_0A4A2631.jpg', '1771063643_0A4A2096.jpg', '1771063644_0A4A1950.jpg',
-        '1771063644_0A4A2160.jpg', '1771063644_0A4A2179.jpg', '1771063644_0A4A2205.jpg',
-        '1771063784_0A4A2827.jpg', '1771063785_0A4A2763.jpg', '1771063785_0A4A2798.jpg',
-        '1771063786_0A4A2832.jpg', '1771063786_0A4A2846.jpg', '1771063863_0A4A3437.jpg',
-        '1771063863_0A4A3603.jpg', '1771063864_0A4A3535.jpg'
-      ]
+      cover: '066-dsc04317'
     },
     {
       slug: 'james-supriya-engagement',
@@ -301,10 +282,29 @@ const AKV = {
       place: 'Bangalore',
       kind: 'Engagement',
       page: 'stories',
+      date: '28 August 2025',
       /* written from the album itself - the order of the afternoon as it was shot */
       story: 'The afternoon they made it official - a garden, an arch of white flowers and both families close by. The portraits came first, while the light was soft; then the rings, the garlands and the cake, and the last frames as the evening came in.',
       album: 'james-and-supriya-engagement',
-      cover: 29
+      cover: '030-0a4a7825'
+    },
+    {
+      slug: 'james-supriya',
+      couple: 'James &amp; Supriya',
+      plain: 'James and Supriya',
+      place: 'Bangalore',
+      kind: 'Wedding',
+      page: 'films',
+      story: 'Through late-night talks, spontaneous adventures, and everyday moments in between, their love grew stronger and deeper. Surrounded by family and friends, they celebrated not just a wedding - but a partnership built on trust, friendship, and unwavering love.'
+    },
+    {
+      slug: 'esha-sanjay',
+      couple: 'Dr Esha &amp; Dr Sanjay',
+      plain: 'Dr Esha and Dr Sanjay',
+      place: 'Bangalore',
+      kind: 'Wedding',
+      page: 'films',
+      story: 'Two healers found their forever in each other. Their wedding was a blend of calm strength and quiet romance - where steady hands that save lives learned to hold on to love. From soft smiles during the vows to teary glances shared between rituals, every moment felt intentional, and the families wrapped the whole day in pride.'
     },
     {
       slug: 'deeksha-jatin',
@@ -313,18 +313,7 @@ const AKV = {
       place: 'Bangalore',
       kind: 'Engagement',
       page: 'stories',
-      story: 'An engagement shot the way an engagement should be - loud with family, quiet in the corners, and photographed from both at once. The rings, the reactions, and the half-second before everybody remembered there was a camera in the room.',
-      project: 321473,
-      cover: '1771240325_MPM05280.jpg',
-      photos: [
-        '1771240127_MPM05376.jpg', '1771240133_MPM04174.jpg', '1771240137_MPM03973.jpg',
-        '1771240138_MPM03996.jpg', '1771240138_MPM04076.jpg', '1771240140_MPM04431.jpg',
-        '1771240141_MPM03442.jpg', '1771240141_MPM05362.jpg', '1771240142_MPM05152.jpg',
-        '1771240142_MPM05266.jpg', '1771240323_MPM04339.jpg', '1771240323_MPM04364.jpg',
-        '1771240324_MPM05395.jpg', '1771240325_MPM04155.jpg', '1771240325_MPM04345.jpg',
-        '1771240325_MPM05242.jpg', '1771240325_MPM05280.jpg', '1771240326_MPM04191.jpg',
-        '1771240326_MPM04310.jpg', '1771240326_MPM05193.jpg', '1771240326_MPM05350.jpg'
-      ]
+      story: 'An engagement shot the way an engagement should be - loud with family, quiet in the corners, and photographed from both at once. The rings, the reactions, and the half-second before everybody remembered there was a camera in the room.'
     },
     {
       slug: 'shravanthi-sandeep',
@@ -334,23 +323,9 @@ const AKV = {
       kind: 'Engagement',
       page: 'stories',
       story: 'A story shot across Bangalore - not a journey to a city, but a chapter where two hearts wandered through it together. Shot as stills and as film, so the engagement had both a photograph to frame and a teaser to send the family.',
-      project: 231989,
-      cover: '1673850138_S_S__296_.jpg',
-      /* their beegara oota, cut by the studio - the one couple on this
-         site whose album has a film to sit beside it */
+      /* their beegara oota, cut by the studio */
       film: 'ubYCcLVG9N8',
-      filmLabel: 'Beegara oota, cut in 4K',
-      photos: [
-        '1673849303_S_S__7_.jpg', '1673849306_S_S__22_.jpg', '1673849306_S_S__9_.jpg',
-        '1673849307_S_S__32_.jpg', '1673849309_S_S__27_.jpg', '1673849311_S_S__16_.jpg',
-        '1673849311_S_S__28_.jpg', '1673849904_S_S__104_.jpg', '1673849904_S_S__21_.jpg',
-        '1673849904_S_S__91_.jpg', '1673849905_S_S__102_.jpg', '1673849906_S_S__101_.jpg',
-        '1673849906_S_S__65_.jpg', '1673850134_S_S__293_.jpg', '1673850135_S_S__306_.jpg',
-        '1673850136_S_S__285_.jpg', '1673850136_S_S__287_.jpg', '1673850137_S_S__301_.jpg',
-        '1673850137_S_S__304_.jpg', '1673850138_S_S__296_.jpg', '1673850140_S_S__274_.jpg',
-        '1673850278_S_S__164_.jpg', '1673850278_S_S__203_.jpg', '1673850278_S_S__206_.jpg',
-        '1673850292_S_S__275_.jpg', '1673850396_S_S__85_.jpg'
-      ]
+      filmLabel: 'Beegara oota, cut in 4K'
     }
   ],
 
@@ -474,83 +449,39 @@ const AKV = {
     { label: 'Delivery', value: 'Four weeks from the last event day' }
   ],
 
-  /* 150 photographs from the studio's portfolio.
-     tag: w wedding | r reception | c couples and portraits | m candid moments */
-  gallery: [
-    ['1771252263_DSC07531.jpg','m'], ['1771243885_DSC01279.jpg','m'], ['1771248764_DSC01535.jpg','m'],
-    ['1771408139_1000228082.jpg','m'], ['1771408223_1000228098.jpg','m'], ['1771408464_1000216865.jpg','m'],
-    ['1771252717_AKV_2704.jpg','c'], ['1771252991_AKV_9323.jpg','c'], ['1771408065_1000113676.jpg','m'],
-    ['1771252718_AKV_2171.jpg','c'], ['1771408262_1000228072.jpg','m'], ['1771250831_MPM08318_Edit.jpg','m'],
-    ['1771250831_MPM08046.jpg','m'], ['1771408426_1000216855.jpg','m'], ['1771252717_AKV_2193.jpg','c'],
-    ['1771249911_MPM09490.jpg','m'], ['1771252992_AKV_9408.jpg','c'], ['1771247880_DSC04881.jpg','m'],
-    ['1771250830_DSC06468.jpg','m'], ['1771252718_AKV_2747.jpg','c'], ['1771243885_DSC02314.jpg','m'],
-    ['1771408299_1000216873.jpg','m'], ['1771249910_DSC01221.jpg','m'], ['1771252718_AKV_2658.jpg','c'],
-    ['1771252990_AKV_9270_Edit.jpg','c'], ['1771246905_0A4A3597.jpg','m'], ['1771249910_DSC05967.jpg','m'],
-    ['1771408182_1000227348.jpg','m'], ['1771408379_1000113664.jpg','m'], ['1771252527_AKV_4001_Edit.jpg','c'],
-    ['1771252433_AKV_0434.jpg','c'], ['1771252264_DSC07917.jpg','m'], ['1771250829_DSC03408.jpg','m'],
-    ['1771249909_DSC02893.jpg','m'], ['1771248764_DSC00511.jpg','m'], ['1771252433_AKV_0684.jpg','c'],
-    ['1771252264_DSC08022.jpg','m'], ['1771250829_DSC04105.jpg','m'], ['1771249911_MPM01504.jpg','m'],
-    ['1771247804_AKV_4355.jpg','c'], ['1771252434_AKV_0817.jpg','c'], ['1771250831_MPM08285_Edit.jpg','m'],
-    ['1771250829_DSC02770.jpg','m'], ['1771249911_MPM01417_Edit.jpg','m'], ['1771247774_AKV_4293_2.jpg','c'],
-    ['1771252263_DSC07550.jpg','m'], ['1771250830_DSC06440_Edit.jpg','m'], ['1771249911_MPM09365.jpg','m'],
-    ['1771249912_MPM01304.jpg','m'], ['1771247516_Reception__322_.jpg','r'], ['1771408493_1000209337.jpg','m'],
-    ['1771250830_DSC07170_Edit.jpg','m'], ['1771252991_AKV_9207.jpg','c'], ['1771249912_MPM09918.jpg','m'],
-    ['1771247465_Reception__71_.jpg','r'], ['1771252263_DSC07777.jpg','m'], ['1771250830_DSC07225_Edit.jpg','m'],
-    ['1771249909_DSC03118.jpg','m'], ['1771249911_DSC00648.jpg','m'], ['1771247312_0A4A2900.jpg','m'],
-    ['1771247250_0A4A7861.jpg','m'], ['1771244412_DSC00571.jpg','m'], ['1771243749_MPM04076.jpg','m'],
-    ['1771073897_SK_03311.jpg','m'], ['1771073609_Reception__14_.jpg','r'], ['1771247203_0A4A6414.jpg','m'],
-    ['1771244244_DSC09005.jpg','m'], ['1771074192_SPV_4428.jpg','m'], ['1771073815_0A4A9148.jpg','m'],
-    ['1771073451_0A4A1093.jpg','m'], ['1771247188_0A4A6402.jpg','m'], ['1771244244_DSC09129.jpg','m'],
-    ['1771244244_DSC09021.jpg','m'], ['1771073764_0A4A8329.jpg','m'], ['1771073144_AKV_9604.jpg','c'],
-    ['1771247070_0A4A7007_wedding.jpg','w'], ['1771243885_0A4A7483.jpg','m'], ['1771244412_DSC00443.jpg','m'],
-    ['1771073725_0A4A8059.jpg','m'], ['1771073085_0A4A2358.jpg','m'], ['1771246837_0A4A1735.jpg','m'],
-    ['1771072148_Wedding__16_.jpg','w'], ['1771073992_SK_03836.jpg','m'], ['1771073694_0A4A7935.jpg','m'],
-    ['1771074048_SPV_3755.jpg','m'], ['1771243956_DSC01718.jpg','m'], ['1771243748_MPM04174.jpg','m'],
-    ['1771073898_SK_03466.jpg','m'], ['1771073634_Reception__16_.jpg','r'], ['1771073085_0A4A2384.jpg','m'],
-    ['1771073085_0A4A2363.jpg','m'], ['1771072512_AKV_2182.jpg','c'], ['1771072370_Wedding__167_.1.jpg','w'],
-    ['1771071967_0B7A9461.jpg','m'], ['1771070936_DSC04737.jpg','m'], ['1771073047_0A4A2369.jpg','m'],
-    ['1771072512_AKV_2453.jpg','c'], ['1771072290_Wedding__87_.jpg','w'], ['1771071920_Muhurtham__125_.2.jpg','w'],
-    ['1771070606_DSC00213.jpg','m'], ['1771243749_MPM03973.jpg','m'], ['1771072467_AKV_1598.jpg','c'],
-    ['1771072223_Wedding__19_.6.jpg','w'], ['1771071872_Reception__19_.jpg','r'], ['1771070522_DSC01220_Edit.jpg','m'],
-    ['1771073008_0A4A1657.jpg','m'], ['1771072468_AKV_1542.jpg','c'], ['1771072086_Reception__22_.7.jpg','r'],
-    ['1771071839_Reception__10_.jpg','r'], ['1771070416_AKV_4474.jpg','c'], ['1771072814_AKV_5950.jpg','c'],
-    ['1771072422_AKV_1158.jpg','c'], ['1771072063_Reception__11_.jpg','r'], ['1771071154_Reception__55_.jpg','r'],
-    ['1771070372_AKV_4596.jpg','c'], ['1771072512_AKV_2270.jpg','c'], ['1771072422_AKV_1112.jpg','c'],
-    ['1771072064_Reception__21_.jpg','r'], ['1771071101_Reception__196_.jpg','r'], ['1771070343_AKV_4671.jpg','c'],
-    ['1771070277_AKV_9494.jpg','c'], ['1771069698_MPM03350.jpg','m'], ['1771068885_DSC01328_Edit.jpg','m'],
-    ['1771067709_DSC04306.jpg','m'], ['1771066883_MPM08254_Edit.jpg','m'], ['1771071065_Reception__44_.jpg','r'],
-    ['1771069372_DSC04388.jpg','m'], ['1771068549_DSC05600.jpg','m'], ['1771067600_DSC04685.jpg','m'],
-    ['1771066798_DSC04074.jpg','m'], ['1771068833_DSC05477.jpg','m'], ['1771069194_DSC09534.jpg','m'],
-    ['1771068372_DSC04263.jpg','m'], ['1771067470_DSC04756.jpg','m'], ['1771066696_DSC03985.jpg','m'],
-    ['1771069986_MPM05242.jpg','m'], ['1771069003_DSC09871.jpg','m'], ['1771068258_DSC03415.jpg','m'],
-    ['1771067275_AKV_4936.jpg','c'], ['1771066696_DSC03974.jpg','m'], ['1771069807_MPM05266.jpg','m'],
-    ['1771068944_DSC01599.jpg','m'], ['1771068135_DSC04252.jpg','m'], ['1771067217_DSC09714.jpg','m'],
-    ['1771065829_MPM07217_Edit.jpg','m'], ['1771067968_DSC01310.jpg','m'], ['1771068906_DSC01386.jpg','m'],
-    ['1771067944_DSC01535.jpg','m'], ['1771067109_wedding__84_.jpg','w'], ['1771065355_DSC01888_Edit.jpg','m']
-  ],
+  /* The archive on the Traditional page: every frame of every album,
+     filled in below from js/albums.js and tagged by the part of the
+     album it comes from. */
+  gallery: [],
 
   galleryFilters: [
     { key: 'all', label: 'Everything' },
-    { key: 'w', label: 'Weddings' },
-    { key: 'r', label: 'Receptions' },
-    { key: 'c', label: 'Couples &amp; Portraits' },
-    { key: 'm', label: 'Candid Moments' }
-  ],
-
-  /* Frames used where a section is still waiting on its own set of
-     photographs. Captioned neutrally so nothing is claimed that the
-     frame does not show. */
-  archiveFrames: [
-    IMG('1771252718_AKV_2171.jpg'), IMG('1771408299_1000216873.jpg'),
-    IMG('1771252991_AKV_9323.jpg'), IMG('1771408065_1000113676.jpg'),
-    IMG('1771252433_AKV_0434.jpg'), IMG('1771408182_1000227348.jpg'),
-    IMG('1771252434_AKV_0817.jpg'), IMG('1771408426_1000216855.jpg')
+    { key: 'w', label: 'The wedding' },
+    { key: 'e', label: 'The engagement' },
+    { key: 'c', label: 'Portraits &amp; couples' },
+    { key: 'd', label: 'Venue &amp; details' }
   ]
 };
 
-/* Albums from the studio's originals: the frames come from js/albums.js */
+/* Albums from the studio's originals: the frames come from js/albums.js.
+   A couple without an album gets an empty list, and shows blank frames. */
+const GALLERY_LABELS = { w: 'Wedding', e: 'Engagement', c: 'Portrait', d: 'Venue and details' };
 AKV.couples.forEach((c) => {
+  c.album = c.album ? ALBUMS[c.album] : null;
+  c.photos = c.album ? c.album.frames : [];
   if (!c.album) return;
-  c.album = ALBUMS[c.album];
-  c.photos = c.album.frames;
+  /* tag each frame by its part of the album, for the archive filters */
+  const p = c.album.parts;
+  const ends = [p.intro, p.intro + p.portraits, p.intro + p.portraits + p.event];
+  c.photos.forEach((f, i) => {
+    const tag = i < ends[0] ? 'd' : i < ends[1] ? 'c' : i < ends[2] ? (c.kind === 'Wedding' ? 'w' : 'e') : 'c';
+    AKV.gallery.push({
+      thumb: ALBUM_SRC(c.album, f, 640),
+      full: ALBUM_FULL(c.album, f),
+      w: f[1], h: f[2],
+      tag: tag,
+      alt: c.plain + ', ' + GALLERY_LABELS[tag].toLowerCase() + ', photographed by AKV Photography',
+      cap: c.plain + ' · ' + c.kind
+    });
+  });
 });

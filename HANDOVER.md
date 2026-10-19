@@ -2,18 +2,15 @@
 
 Everything the studio still owes, and exactly where each piece goes.
 
-All three items are wired already. Nothing here needs a developer to
-re-architect anything — each one is a value typed into **one block** at
-the top of `js/data.js`, marked `CLIENT HANDOVER`.
+The logo and the photographs are in. What is left is typed into the
+`SETUP` block at the top of `js/data.js`, marked `CLIENT HANDOVER`.
 
 ```js
 const SETUP = {
-  photos: 'wedmegood',        // -> 'local' once the originals land
   photoDir: 'assets/photos/',
-  logo: '',                   // the studio's lockup
-  logoLight: '',              // the reversed one, for the dark footer
-  logoMark: '',               // a bare mark, if there is no lockup
-  logoHeight: 34,
+  logo: 'assets/brand/logo-row.svg',        // done
+  logoLight: 'assets/brand/logo-light.svg', // done
+  founderPhoto: '',           // Anil's portrait, still to come
   formAction: '',             // the Google Form endpoint
   formFields: { … }           // its entry.XXXX ids
 };
@@ -21,94 +18,60 @@ const SETUP = {
 
 ---
 
-## 1. The logo
+## 1. The logo — done (Oct 2026)
 
-**Ask the client for:**
+The studio sent its logo on Google Drive. The vector PDF in that folder
+was converted to SVG, so it stays sharp at any size:
 
-| File | Why it is needed |
+| File | Where it is used |
 |---|---|
-| **Horizontal lockup, dark** | The nav and the top of the footer sit on pale paper. |
-| **Horizontal lockup, reversed (white/light)** | The footer background is near-black. A dark-only logo disappears there. This is the one that usually gets forgotten. |
-| **Square mark on its own** | The favicon, and the nav on narrow phones. |
-| Brand colours as hex codes | Only so we can check they do not fight the brass/paper palette. |
+| `assets/brand/logo-row.svg` | The nav: the camera mark beside AKV PHOTOGRAPHY |
+| `assets/brand/logo-light.svg` | The dark footer: the full logo with its tagline, in light ink |
+| `assets/brand/mark.svg` | The About card, holding Anil's portrait slot |
+| `assets/favicon.svg`, `assets/apple-touch-icon.png` | Browser tab and phone home-screen icon |
 
-Format: **SVG preferred.** Otherwise PNG at 1024px or larger with a
-transparent background — not a JPEG, and not a screenshot of a logo.
-
-**Where it goes:**
-
-```js
-logo:      'assets/logo.svg',
-logoLight: 'assets/logo-reversed.svg',
-```
-
-That is the whole job. The nav brand, the mobile menu and the footer all
-swap themselves over — no HTML is touched. If only a square mark exists,
-set `logoMark` instead and the typeset "AKV Photography" stays beside it.
-
-Two files still to replace by hand once the logo exists:
-`assets/favicon.svg`, and the `og:image` meta tag at the top of each of
-the five pages (that is the picture that appears when the link is shared
-on WhatsApp).
+They are set in `SETUP.logo` / `SETUP.logoLight` in `js/data.js`
+(`logoHeight` for the nav, `logoFooterHeight` for the footer). The
+yellow `DP.jpg` and the Google Forms header in the same folder are for
+social profiles and the form, not the site.
 
 ---
 
 ## 2. The photographs
 
-**Full checklist:** `assets/photos/MANIFEST.txt` — every photograph the
-site asks for, grouped by section, with the exact filename it looks for.
-**309 in total**, but most of that is the 150-frame archive gallery; the
-sections that actually need attention are much smaller:
+Every photograph on the site is now the studio's own, from their Drive
+albums. The old WedMeGood images are gone completely: hero, film strip,
+page headers, the Traditional archive, the couples and the maternity
+stand-ins.
 
-| Section | Count | Shape |
-|---|---|---|
-| Home hero slides | 4 | Portrait-ish, one strong subject each |
-| Home shuffle card | 4 | Any |
-| Page header bands (4 pages × 4) | 16 | Landscape |
-| Couple albums | 5 albums, 20–30 each | Portrait 3:4 |
-| Maternity / lifestyle | 8 | Any — **currently placeholders** |
-| Archive gallery | 150 | Mixed |
-| **Anil's portrait (About)** | 1 | Portrait 4:5, ≥900px — **currently absent** |
+**How a couple works** (`js/data.js` → `couples`, `js/albums.js`):
 
-A portrait of Anil goes in through `SETUP.founderPhoto` rather than the
-manifest, since it is the one photograph with no filename to match:
+- Every couple is on the **Stories** page; wedding days are also on
+  **Weddings**. Each story shows its introduction, the album's opening
+  frames, and a **View full gallery** button that opens the whole album
+  in a sheet over the same page (the phone's back button closes it, and
+  `stories.html#<slug>/gallery` links straight to it).
+- A gallery always runs in this order, set by `parts` in `js/albums.js`:
+  **opening frames** (venue, decor) → **individual portraits** (bride,
+  then groom) → **the wedding or engagement** → **the couple together**.
+  No text is set between photographs.
+- A couple with no `album` shows blank frames and no gallery button.
+  Today that is James & Supriya (wedding), Dr Esha & Dr Sanjay,
+  Deeksha & Jatin and Shravanthi & Sandeep.
 
-```js
-founderPhoto: 'assets/photos/anil.jpg',
-```
+**To add a couple's photographs:**
 
-It drops in above his name on the About page; no markup changes.
+1. Download their Drive folder and run `tools/process_albums.py` over it
+   (it writes 640 / 1080 / full-size WebP into `assets/photos/<album>/`).
+2. Look through the frames and put them in the order above, then add the
+   album to `js/albums.js` with its four `parts` counts.
+3. Set `album:` (and `cover:`, the stem of the frame on the home-page
+   card) on the couple in `js/data.js`. The page, the gallery and the
+   Traditional archive all pick it up.
 
-**Specification to send the client:**
-
-- Longest edge **2500px**
-- **JPEG, quality 85**
-- **sRGB colour profile** — not Adobe RGB, which desaturates in browsers
-- Keep the filenames from the manifest, or send a mapping
-
-**Where it goes:**
-
-1. Drop the files into `assets/photos/`
-2. Set `photos: 'local'` in `js/data.js`
-3. Reload — every page follows
-
-> **Before going live:** the site currently streams images from the
-> WedMeGood CDN, which resizes them on demand. A local folder has no such
-> service, so once the originals are in, generate the 400/800/1600px
-> variants rather than serving 2500px files to phones. The home page
-> alone loads about 50 images.
-
-**Two genuine gaps:**
-
-1. The maternity and lifestyle set on the Stories page is standing in
-   with frames from the wedding archive, and the page says so. Those 8
-   need real maternity photographs.
-2. **There is no photograph of Anil.** The one that used to sit on his
-   About card was a bride from the wedding archive, which read as
-   though it were him, so it has been removed. The card shows his name
-   and role until a real portrait arrives. None of the studio's
-   listings carry one — WedMeGood's own profile picture for AKV is a
-   bride photograph, not the founder.
+**Still missing:** maternity and lifestyle photographs (that section is
+text only for now), and a portrait of Anil for the About page
+(`SETUP.founderPhoto`).
 
 ---
 
@@ -178,28 +141,3 @@ which is what it did before.
       Justdial says 560076, WeddingWire 560078, WedMeGood 560083. All
       three map to the same point. The site uses **560076**, matching
       Justdial and their original website.
-
----
-
-## Albums from the studio's originals (Oct 2026)
-
-The studio shared full-resolution albums on Google Drive. These are now
-served from this repo, not WedMeGood:
-
-| Album | Frames | Page |
-|---|---|---|
-| Gajalakshmi & Santhosh — wedding & reception | 111 | Weddings |
-| James & Supriya — engagement | 46 | Stories |
-
-- Files: `assets/photos/<album>/NNN-<original>-{640,1080,full}.webp`
-  (640/1080 wide for the grid, 2400px long edge for the lightbox, sRGB,
-  metadata stripped — about 55 KB / 125 KB / 500 KB each).
-- Order: the order the day happened (camera capture time), split into
-  chapters. Both live in `js/albums.js`; a couple entry in `js/data.js`
-  points at it with `album:` and picks its card photo with `cover:`.
-- Layout: these albums keep every photograph's own shape (no cropping),
-  in justified rows that read left to right, with a chapter title between
-  scenes.
-- To add the next batch: download the Drive folder, run `tools/process_albums.py`
-  over it (it sorts by capture time and writes the three sizes),
-  set the chapters, and add the album to `js/albums.js`.

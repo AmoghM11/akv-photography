@@ -266,6 +266,7 @@ body.locked{ overflow:hidden; }
 .hero__slides{ position:absolute; inset:0; }
 .hero__slides img{
   position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+  object-position:50% 30%; /* portrait frames: keep the faces in a wide crop */
   opacity:0; transform:scale(1.06);
   transition:opacity 1.5s var(--e-out);
 }
@@ -725,7 +726,7 @@ body.locked{ overflow:hidden; }
 .couple:first-of-type{ border-top:0; padding-top:0; }
 .couple__head{ display:grid; gap:20px; margin-bottom:clamp(28px,4vw,44px); }
 @media (min-width:900px){
-  .couple__head{ grid-template-columns:1fr 1fr; align-items:end; gap:clamp(32px,5vw,64px); }
+  .couple__head{ grid-template-columns:1fr 1fr; align-items:start; gap:clamp(32px,5vw,64px); }
 }
 .couple__kind{ font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--brass); margin:0 0 10px; }
 .couple__name{
@@ -757,7 +758,7 @@ body.locked{ overflow:hidden; }
    cropped. Every frame grows in proportion to its aspect ratio, so a
    row always shares one height. */
 .cgrid--story{
-  --row:180px; --gap:6px;
+  --row:130px; --gap:6px;
   display:flex; flex-wrap:wrap; gap:var(--gap);
 }
 @media (min-width:720px){ .cgrid--story{ --row:250px; --gap:10px; } }
@@ -768,23 +769,57 @@ body.locked{ overflow:hidden; }
 }
 .cgrid--story .cframe:first-child{ grid-column:auto; grid-row:auto; }
 .cgrid--story .cframe:hover img{ transform:scale(1.03); }
-/* ends a chapter's last row at its natural height */
+/* ends the last row at its natural height instead of stretching it */
 .cfill{ flex:10000 1 0; height:0; }
-.cchap{
-  flex:0 0 100%; display:flex; align-items:baseline; gap:14px;
-  margin:clamp(28px,4vw,48px) 0 clamp(6px,1vw,12px);
-  font-family:var(--font-d); font-weight:300; font-style:italic; color:var(--ink);
-  font-size:clamp(22px,2.6vw,32px); line-height:1.1;
-}
-.cchap:first-child{ margin-top:0; }
-.cchap span{
-  font-family:var(--font-b); font-style:normal; font-size:11px; letter-spacing:.18em;
-  color:var(--brass); transform:translateY(-.3em);
-}
-.cchap::after{ content:''; flex:1; height:1px; background:var(--line-soft); align-self:center; }
 
-.couple__more{ display:flex; justify-content:center; margin-top:clamp(22px,3vw,34px); }
-.couple__more.is-done{ display:none; }
+/* a couple's introduction: the story, then words from the couple */
+.couple__story + .couple__story{ margin-top:14px; }
+.couple__quote{ margin:22px 0 0; padding-left:18px; border-left:2px solid var(--brass); max-width:52ch; }
+.couple__quote p{ font-family:var(--font-d); font-size:clamp(18px,1.8vw,21px); line-height:1.45; color:var(--ink); margin:0 0 6px; }
+.couple__quote cite{ font-style:normal; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+
+/* a couple whose photographs have not arrived yet: blank frames, one
+   row the height of a photograph row, so the page keeps its rhythm */
+.sblank{ display:flex; gap:6px; height:150px; }
+@media (min-width:720px){ .sblank{ gap:10px; height:250px; } }
+@media (min-width:1180px){ .sblank{ gap:12px; height:280px; } }
+.sblank i{ flex:1; background:var(--paper-3); }
+.sblank i:nth-child(2){ flex:1.5; }
+
+.couple__more{ display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin-top:clamp(22px,3vw,34px); }
+.couple__n{
+  margin-left:10px; padding-left:10px; border-left:1px solid rgba(251,249,245,.3);
+  font-variant-numeric:lining-nums tabular-nums;
+}
+
+/* --- the full gallery: a sheet over the page ---------------- */
+.sgallery{
+  position:fixed; inset:0; z-index:80;
+  background:var(--paper); overflow-y:auto; overscroll-behavior:contain;
+  animation:sgIn .45s var(--e-out);
+}
+.sgallery[hidden]{ display:none; }
+@keyframes sgIn{ from{ opacity:0; transform:translateY(24px); } to{ opacity:1; transform:none; } }
+.sgallery__bar{
+  position:sticky; top:0; z-index:2;
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  padding:14px var(--pad);
+  background:rgba(251,249,245,.92); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line-soft);
+}
+.sgallery__head .couple__kind{ margin:0 0 4px; }
+.sgallery__title{
+  font-family:var(--font-d); font-weight:300; color:var(--ink); margin:0;
+  font-size:clamp(24px,3.2vw,36px); line-height:1.1;
+}
+.sgallery__close{
+  flex:none; width:48px; height:48px; border-radius:50%;
+  display:grid; place-content:center; font-size:26px; line-height:1;
+  background:var(--card); border:1px solid var(--line); color:var(--ink); cursor:pointer;
+  transition:background .3s, border-color .3s;
+}
+.sgallery__close:hover{ background:var(--paper-2); border-color:var(--ink); }
+.sgallery__body{ padding:clamp(16px,3vw,32px) var(--pad) clamp(40px,6vw,72px); max-width:var(--shell-wide); margin:0 auto; }
 
 /* --- films ------------------------------------------------ */
 .filmgrid{ display:grid; gap:14px; }
@@ -1005,7 +1040,6 @@ a.wed{ color:inherit; }
 }
 
 /* --- watch-the-film button on a couple -------------------- */
-.couple__film{ margin-top:20px; }
 .couple__filmicon{ display:inline-grid; place-content:center; color:var(--brass); }
 .couple__filmicon svg{ width:11px; height:11px; display:block; }
 
@@ -1035,10 +1069,13 @@ a.wed{ color:inherit; }
    stretched or from inheriting the aperture's zero line-height. */
 .nav__brand img{ height:34px; width:auto; max-width:210px; object-fit:contain; }
 .nav__mark img{ height:34px; width:auto; }
-.footer__brand img{ max-width:220px; }
+.footer__brand img{ max-width:min(100%, 180px); }
 @media (max-width:560px){
-  .nav__brand img{ max-width:150px; }
+  .nav__brand img{ max-width:160px; }
 }
+
+/* the founder card waits on Anil's portrait behind the studio's mark */
+.portrait .portrait__mark{ width:clamp(64px,12vw,88px); height:auto; object-fit:contain; opacity:.22; }
 
 /* The founder portrait slot. It holds the 4:5 the photograph will use,
    so dropping one in later moves nothing. Empty, it reads as a quiet
