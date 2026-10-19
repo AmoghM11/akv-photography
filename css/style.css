@@ -772,27 +772,25 @@ body.locked{ overflow:hidden; }
 /* ends the last row at its natural height instead of stretching it */
 .cfill{ flex:10000 1 0; height:0; }
 
-/* a couple's introduction: the story, then words from the couple */
-.couple__story + .couple__story{ margin-top:14px; }
-.couple__quote{ margin:22px 0 0; padding-left:18px; border-left:2px solid var(--brass); max-width:52ch; }
-.couple__quote p{ font-family:var(--font-d); font-size:clamp(18px,1.8vw,21px); line-height:1.45; color:var(--ink); margin:0 0 6px; }
-.couple__quote cite{ font-style:normal; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
-
-/* a couple whose photographs have not arrived yet: blank frames, one
-   row the height of a photograph row, so the page keeps its rhythm */
-.sblank{ display:flex; gap:6px; height:150px; }
-@media (min-width:720px){ .sblank{ gap:10px; height:250px; } }
-@media (min-width:1180px){ .sblank{ gap:12px; height:280px; } }
-.sblank i{ flex:1; background:var(--paper-3); }
-.sblank i:nth-child(2){ flex:1.5; }
-
-.couple__more{ display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin-top:clamp(22px,3vw,34px); }
-.couple__n{
-  margin-left:10px; padding-left:10px; border-left:1px solid rgba(251,249,245,.3);
-  font-variant-numeric:lining-nums tabular-nums;
+/* --- the couples: a thumbnail and their names, nothing else - */
+.thumbs{
+  display:grid; gap:clamp(28px,4vw,44px) clamp(16px,2vw,24px);
+  max-width:920px; margin:0 auto;
 }
+@media (min-width:560px){ .thumbs{ grid-template-columns:repeat(2,1fr); } }
+.thumb{ display:block; color:inherit; text-align:center; }
+.thumb__media{ display:block; aspect-ratio:3/2; overflow:hidden; background:var(--paper-3); }
+.thumb__media img{ width:100%; height:100%; object-fit:cover; transition:transform 1s var(--e-out); }
+.thumb:hover .thumb__media img{ transform:scale(1.04); }
+.thumb__name{
+  display:block; margin-top:14px;
+  font-family:var(--font-d); font-weight:400; color:var(--ink);
+  font-size:clamp(21px,2.2vw,25px); line-height:1.2;
+  font-variant-numeric:lining-nums;
+}
+.thumb:hover .thumb__name{ color:var(--brass); }
 
-/* --- the full gallery: a sheet over the page ---------------- */
+/* --- a couple's story: a sheet over the page ---------------- */
 .sgallery{
   position:fixed; inset:0; z-index:80;
   background:var(--paper); overflow-y:auto; overscroll-behavior:contain;
@@ -801,25 +799,40 @@ body.locked{ overflow:hidden; }
 .sgallery[hidden]{ display:none; }
 @keyframes sgIn{ from{ opacity:0; transform:translateY(24px); } to{ opacity:1; transform:none; } }
 .sgallery__bar{
-  position:sticky; top:0; z-index:2;
-  display:flex; align-items:center; justify-content:space-between; gap:16px;
-  padding:14px var(--pad);
-  background:rgba(251,249,245,.92); backdrop-filter:blur(10px);
-  border-bottom:1px solid var(--line-soft);
-}
-.sgallery__head .couple__kind{ margin:0 0 4px; }
-.sgallery__title{
-  font-family:var(--font-d); font-weight:300; color:var(--ink); margin:0;
-  font-size:clamp(24px,3.2vw,36px); line-height:1.1;
+  position:sticky; top:0; z-index:2; height:0;
+  display:flex; justify-content:flex-end; padding:0 clamp(12px,3vw,28px);
 }
 .sgallery__close{
-  flex:none; width:48px; height:48px; border-radius:50%;
+  flex:none; margin-top:clamp(12px,2.5vw,24px); width:48px; height:48px; border-radius:50%;
   display:grid; place-content:center; font-size:26px; line-height:1;
-  background:var(--card); border:1px solid var(--line); color:var(--ink); cursor:pointer;
+  background:rgba(251,249,245,.92); backdrop-filter:blur(8px);
+  border:1px solid var(--line); color:var(--ink); cursor:pointer;
   transition:background .3s, border-color .3s;
 }
 .sgallery__close:hover{ background:var(--paper-2); border-color:var(--ink); }
-.sgallery__body{ padding:clamp(16px,3vw,32px) var(--pad) clamp(40px,6vw,72px); max-width:var(--shell-wide); margin:0 auto; }
+.sgallery__body{ padding:clamp(72px,9vw,104px) var(--pad) clamp(48px,7vw,88px); }
+/* a few lines about them, then the photographs */
+.sgallery__intro{ max-width:620px; margin:0 auto clamp(32px,5vw,52px); text-align:center; }
+.sgallery__title{
+  font-family:var(--font-d); font-weight:300; color:var(--ink);
+  font-size:clamp(34px,5vw,56px); line-height:1.05; letter-spacing:-.015em; margin:0 0 20px;
+  font-variant-numeric:lining-nums;
+}
+.sgallery__story{
+  font-family:var(--font-d); font-style:italic; font-size:clamp(17px,1.7vw,19px); line-height:1.55;
+  color:var(--text); margin:0 auto; max-width:56ch;
+}
+.sgallery__intro .couple__film{ margin-top:22px; }
+/* one photograph after the other, each one whole on the screen */
+.reel{ display:flex; flex-direction:column; align-items:center; gap:clamp(10px,1.4vw,16px); }
+/* sized before it loads, from its own shape: as wide as the column
+   allows, but never taller than the screen */
+.reel img{
+  display:block; height:auto; aspect-ratio:var(--ar);
+  width:min(100%, 760px, calc((100svh - 40px) * var(--ar)));
+  background:var(--paper-3);
+}
+.reel__blank{ display:block; width:min(100%, 760px); aspect-ratio:3/2; background:var(--paper-3); }
 
 /* --- films ------------------------------------------------ */
 .filmgrid{ display:grid; gap:14px; }
