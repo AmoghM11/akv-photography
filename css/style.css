@@ -689,6 +689,9 @@ body.locked{ overflow:hidden; }
 .phero__aside{ color:var(--muted); font-size:14.5px; margin:0; max-width:42ch; }
 .phero__aside b{ color:var(--ink); font-weight:500; }
 
+/* a page title with no row of photographs under it */
+.phero--plain{ padding-bottom:clamp(44px,6vw,80px); }
+
 .phero__band{
   margin-top:clamp(40px,6vw,72px);
   display:grid; grid-template-columns:repeat(2,1fr); gap:8px;
