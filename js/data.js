@@ -81,7 +81,7 @@ const SETUP = {
    albums the studio has sent so far. */
 const PHOTO = (album, stem, w) => SETUP.photoDir + album + '/' + stem + '-' + (w || 1080) + '.webp';
 const G = (stem, w) => PHOTO('gajalakshmi-and-santhosh', stem, w);
-const J = (stem, w) => PHOTO('james-and-supriya-engagement', stem, w);
+const J = (stem, w) => PHOTO('james-and-supriya/engagement', stem, w);
 
 /* The studio's own albums (js/albums.js), served from this repo as
    WebP: 640 and 1080 wide for the grid, 2400px on the long edge for
@@ -276,26 +276,17 @@ const AKV = {
       cover: '066-dsc04317'
     },
     {
-      slug: 'james-supriya-engagement',
-      couple: 'James &amp; Supriya',
-      plain: 'James and Supriya',
-      place: 'Bangalore',
-      kind: 'Engagement',
-      page: 'stories',
-      date: '28 August 2025',
-      /* written from the album itself - the order of the afternoon as it was shot */
-      story: 'The afternoon they made it official - a garden, an arch of white flowers and both families close by. The portraits came first, while the light was soft; then the rings, the garlands and the cake, and the last frames as the evening came in.',
-      album: 'james-and-supriya-engagement',
-      cover: '030-0a4a7825'
-    },
-    {
       slug: 'james-supriya',
       couple: 'James &amp; Supriya',
       plain: 'James and Supriya',
       place: 'Bangalore',
-      kind: 'Wedding',
+      /* one story for all three occasions the studio shot for them */
+      kind: 'Engagement, Wedding &amp; Pre-wedding',
       page: 'films',
-      story: 'Through late-night talks, spontaneous adventures, and everyday moments in between, their love grew stronger and deeper. Surrounded by family and friends, they celebrated not just a wedding - but a partnership built on trust, friendship, and unwavering love.'
+      date: '28 &amp; 29 August 2025',
+      story: 'Through late-night talks, spontaneous adventures, and everyday moments in between, their love grew stronger and deeper. They made it official on an afternoon in a garden, under an arch of white flowers with both families close by, and were married the next morning in an old stone temple. Then came a shoot of their own by the sea - just the two of them.',
+      album: 'james-and-supriya',
+      cover: 'wedding/008-dsc01340'
     },
     {
       slug: 'esha-sanjay',
@@ -470,11 +461,17 @@ AKV.couples.forEach((c) => {
   c.album = c.album ? ALBUMS[c.album] : null;
   c.photos = c.album ? c.album.frames : [];
   if (!c.album) return;
-  /* tag each frame by its part of the album, for the archive filters */
-  const p = c.album.parts;
-  const ends = [p.intro, p.intro + p.portraits, p.intro + p.portraits + p.event];
+  /* tag each frame by its part of the album, for the archive filters.
+     The parts run in order; an album with more than one occasion names
+     each one (engagement, wedding) instead of a single event. */
+  const PART_TAG = { intro: 'd', portraits: 'c', couple: 'c', engagement: 'e', wedding: 'w',
+    event: c.kind === 'Wedding' ? 'w' : 'e' };
+  const tags = [];
+  Object.keys(c.album.parts).forEach((k) => {
+    for (let n = 0; n < c.album.parts[k]; n++) tags.push(PART_TAG[k] || 'c');
+  });
   c.photos.forEach((f, i) => {
-    const tag = i < ends[0] ? 'd' : i < ends[1] ? 'c' : i < ends[2] ? (c.kind === 'Wedding' ? 'w' : 'e') : 'c';
+    const tag = tags[i] || 'c';
     AKV.gallery.push({
       thumb: ALBUM_SRC(c.album, f, 640),
       full: ALBUM_FULL(c.album, f),

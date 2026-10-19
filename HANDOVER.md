@@ -56,8 +56,13 @@ stand-ins.
   then groom) → **the wedding or engagement** → **the couple together**.
   No text is set between photographs.
 - A couple with no `album` shows blank frames and no gallery button.
-  Today that is James & Supriya (wedding), Dr Esha & Dr Sanjay,
-  Deeksha & Jatin and Shravanthi & Sandeep.
+  Today that is Dr Esha & Dr Sanjay, Deeksha & Jatin and
+  Shravanthi & Sandeep.
+- A couple with several occasions keeps them in one story and one
+  folder (`assets/photos/james-and-supriya/{engagement,wedding,prewedding}/`).
+  Their `parts` name each occasion (`engagement`, `wedding`) in place of
+  a single `event`. The Drive's `._` files are macOS clutter; the
+  processing tool skips them.
 
 **To add a couple's photographs:**
 

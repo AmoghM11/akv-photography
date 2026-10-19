@@ -85,7 +85,8 @@ def main():
     manifest = {}
     jobs = []
     for root, _, files in os.walk(raw):
-        frames = [f for f in files if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+        # '._' files are macOS sidecars that ride along in Drive folders, not photos
+        frames = [f for f in files if f.lower().endswith(('.jpg', '.jpeg', '.png')) and not f.startswith('._')]
         if not frames:
             continue
         album = os.path.relpath(root, raw).replace('\\', '/')
