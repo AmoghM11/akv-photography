@@ -149,7 +149,7 @@ const AKV = {
   nav: [
     { file: 'index.html',       label: 'Home' },
     { file: 'stories.html',     label: 'Stories' },
-    { file: 'films.html',       label: 'Weddings' },
+    { file: 'films.html',       label: 'Pre-Wedding' },
     { file: 'traditional.html', label: 'Traditional' },
     { file: 'about.html',       label: 'About' }
   ],
