@@ -289,6 +289,20 @@ const AKV = {
       cover: 'wedding/008-dsc01340'
     },
     {
+      slug: 'ragini-sumanth',
+      couple: 'Ragini &amp; Sumanth',
+      plain: 'Ragini and Sumanth',
+      place: 'Bangalore',
+      /* the engagement and the wedding, a day apart, in one story */
+      kind: 'Engagement &amp; Wedding',
+      page: 'films',
+      date: '2 &amp; 3 November 2024',
+      /* written from the album itself */
+      story: 'They exchanged rings on a bright November afternoon - Ragini in lime and violet silk, Sumanth in a dark sherwani, jasmine garlands between them. The wedding came the very next morning in a garden venue: the mangalsutra, the seven steps across a carpet of flower petals, and the hunt for the ring in the pot that left them both laughing.',
+      album: 'ragini-and-sumanth',
+      cover: '009-akv_0634'
+    },
+    {
       slug: 'esha-sanjay',
       couple: 'Dr Esha &amp; Dr Sanjay',
       plain: 'Dr Esha and Dr Sanjay',
@@ -304,7 +318,10 @@ const AKV = {
       place: 'Bangalore',
       kind: 'Engagement',
       page: 'stories',
-      story: 'An engagement shot the way an engagement should be - loud with family, quiet in the corners, and photographed from both at once. The rings, the reactions, and the half-second before everybody remembered there was a camera in the room.'
+      date: '19 May 2025',
+      story: 'An engagement shot the way an engagement should be - loud with family, quiet in the corners, and photographed from both at once. The rings, the reactions, and the half-second before everybody remembered there was a camera in the room.',
+      album: 'deeksha-and-jatin',
+      cover: '083-mpm05292'
     },
     {
       slug: 'shravanthi-sandeep',
