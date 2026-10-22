@@ -320,6 +320,23 @@
   })();
 
   /* ---------------------------------------------------------
+     The promise — the studio's motto, word by word
+     --------------------------------------------------------- */
+  (function promise() {
+    const box = $('#promise');
+    if (!box) return;
+
+    box.innerHTML = AKV.promise
+      .map((p, i) =>
+        '<li class="promise__item reveal">' +
+          '<span class="promise__n">0' + (i + 1) + '</span>' +
+          '<h3 class="promise__word">' + p.word + '</h3>' +
+          '<p class="promise__note">' + p.note + '</p>' +
+        '</li>')
+      .join('');
+  })();
+
+  /* ---------------------------------------------------------
      Pillars — animated counters
      --------------------------------------------------------- */
   (function pillars() {
@@ -1205,6 +1222,9 @@
     const set = (id, fn) => { const el = $(id); if (el) fn(el); };
     set('#foot-tag', (el) => {
       el.textContent = AKV.brand.tagline + '. ' + AKV.brand.promise;
+      /* the motto under it, on every page, without touching each footer */
+      el.insertAdjacentHTML('beforebegin',
+        '<p class="footer__motto">' + AKV.brand.motto.map((w) => '<span>' + w + '</span>').join('') + '</p>');
     });
     set('#foot-hours', (el) => { el.textContent = C.hours; });
     set('#foot-addr', (el) => { el.innerHTML = C.addressLine2 + '<br>' + C.addressLine3; });

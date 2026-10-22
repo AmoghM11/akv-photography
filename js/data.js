@@ -106,6 +106,8 @@ const AKV = {
     /* the studio's own words, from their Instagram bio */
     tagline: 'Crafting stories through visuals',
     promise: 'Premium wedding photography services. 600+ weddings covered since 2012.',
+    /* the studio's motto: the promise band and every footer */
+    motto: ['Quality', 'Commitment', 'On-time delivery'],
     founder: 'Anil Kumar Venkatesh',
     city: 'Bangalore',
     since: 2012
@@ -199,6 +201,14 @@ const AKV = {
     traditional: [G('025-dsc03078', 640), G('038-dsc03305', 640), G('041-dsc03397', 640), G('026-dsc03087', 640)],
     about: [G('001-dsc02782', 640), J('001-0a4a6928', 640), G('005-dsc02858', 640), G('018-dsc02899', 640)]
   },
+
+  /* the motto, each word with what it means in practice - every note
+     restates something the studio already publishes (process, terms) */
+  promise: [
+    { word: 'Quality', note: 'Every photograph colour-graded by hand, every album sequenced spread by spread.' },
+    { word: 'Commitment', note: 'Anil plans each shoot with you before the day, so nothing is improvised.' },
+    { word: 'On-time delivery', note: 'Photographs, films and albums within four weeks of the last event day.' }
+  ],
 
   pillars: [
     { value: 600, decimals: 0, suffix: '+', label: 'Weddings covered since 2012', note: 'The studio&rsquo;s own count, and still climbing.' },
