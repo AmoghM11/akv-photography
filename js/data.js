@@ -289,6 +289,18 @@ const AKV = {
       cover: 'wedding/008-dsc01340'
     },
     {
+      slug: 'deeksha-jatin',
+      couple: 'Deeksha &amp; Jatin',
+      plain: 'Deeksha and Jatin',
+      place: 'Bangalore',
+      kind: 'Engagement',
+      page: 'stories',
+      date: '19 May 2025',
+      story: 'An engagement shot the way an engagement should be - loud with family, quiet in the corners, and photographed from both at once. The rings, the reactions, and the half-second before everybody remembered there was a camera in the room.',
+      album: 'deeksha-and-jatin',
+      cover: '083-mpm05292'
+    },
+    {
       slug: 'ragini-sumanth',
       couple: 'Ragini &amp; Sumanth',
       plain: 'Ragini and Sumanth',
@@ -310,18 +322,6 @@ const AKV = {
       kind: 'Wedding',
       page: 'films',
       story: 'Two healers found their forever in each other. Their wedding was a blend of calm strength and quiet romance - where steady hands that save lives learned to hold on to love. From soft smiles during the vows to teary glances shared between rituals, every moment felt intentional, and the families wrapped the whole day in pride.'
-    },
-    {
-      slug: 'deeksha-jatin',
-      couple: 'Deeksha &amp; Jatin',
-      plain: 'Deeksha and Jatin',
-      place: 'Bangalore',
-      kind: 'Engagement',
-      page: 'stories',
-      date: '19 May 2025',
-      story: 'An engagement shot the way an engagement should be - loud with family, quiet in the corners, and photographed from both at once. The rings, the reactions, and the half-second before everybody remembered there was a camera in the room.',
-      album: 'deeksha-and-jatin',
-      cover: '083-mpm05292'
     },
     {
       slug: 'shravanthi-sandeep',
