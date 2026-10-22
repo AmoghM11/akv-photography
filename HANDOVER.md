@@ -54,6 +54,10 @@ stand-ins.
 - A gallery always runs in this order, set by `parts` in `js/albums.js`:
   **opening frames** (venue, decor) → **individual portraits** (bride,
   then groom) → **the wedding or engagement** → **the couple together**.
+  A **reception** always comes last, as its own run of the same four
+  parts (stage and decor, bride, groom, the reception, the couple):
+  `reception: { intro, portraits, event, couple }` inside `parts`.
+  Today only Gajalakshmi & Santhosh have reception photographs.
   No text is set between photographs.
 - A couple with no `album` shows blank frames and no gallery button.
   Today that is Dr Esha & Dr Sanjay and Shravanthi & Sandeep.

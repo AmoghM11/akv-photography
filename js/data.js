@@ -490,13 +490,18 @@ AKV.couples.forEach((c) => {
   if (!c.album) return;
   /* tag each frame by its part of the album, for the archive filters.
      The parts run in order; an album with more than one occasion names
-     each one (engagement, wedding) instead of a single event. */
+     each one (engagement, wedding) instead of a single event. A
+     reception comes last as its own run of parts; its event is part
+     of the wedding. */
   const PART_TAG = { intro: 'd', portraits: 'c', couple: 'c', engagement: 'e', wedding: 'w',
     event: c.kind === 'Wedding' ? 'w' : 'e' };
   const tags = [];
-  Object.keys(c.album.parts).forEach((k) => {
-    for (let n = 0; n < c.album.parts[k]; n++) tags.push(PART_TAG[k] || 'c');
+  const tagParts = (parts, eventTag) => Object.keys(parts).forEach((k) => {
+    if (typeof parts[k] === 'object') return tagParts(parts[k], 'w');
+    const tag = k === 'event' && eventTag ? eventTag : PART_TAG[k] || 'c';
+    for (let n = 0; n < parts[k]; n++) tags.push(tag);
   });
+  tagParts(c.album.parts);
   c.photos.forEach((f, i) => {
     const tag = tags[i] || 'c';
     AKV.gallery.push({
